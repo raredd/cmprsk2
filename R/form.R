@@ -4,7 +4,8 @@
 
 
 ### TODO
-# finegray2
+# finegray2 - NOT STARTED
+# use relevel, factor, etc in crr2 - NOT STARTED
 ###
 
 
@@ -24,6 +25,15 @@
 #' @param cox logical; if \code{TRUE}, a \code{\link{coxph}} model is also
 #' fit modeling the event of interest
 #' @param ... additional arguments passed to \code{\link[cmprsk]{crr}}
+#' 
+#' @return
+#' A list of \code{\link{crr}} objects with some additional attributes:
+#' 
+#' \item{\code{$nuftime}}{a vector with the number of times each unique
+#' failure time \code{$uftime} was seen}
+#' \item{\code{attr(, "model.frame")}}{the \code{\link{model.frame}}, i.e.,
+#' \code{cov1}, used in the call to \code{\link{crr}}}
+#' 
 #'
 #' @seealso
 #' \code{\link{summary.crr2}}; \code{\link[cmprsk]{crr}};
@@ -36,11 +46,17 @@
 #' crrs <- crr2(form, transplant, which = 'ltx', cox = TRUE)
 #' 
 #' summary(crrs)
-#' 
 #' library('htmlTable')
 #' summary(crrs)
 #' 
 #' crr2(form, transplant, cox = TRUE, variance = FALSE)
+#' 
+#' 
+#' ## use the call from a crr2 object to run cmprsk::crr
+#' cl <- crr2(Surv(futime, event(censored) == death) ~ age + sex + abo,
+#'            na.omit(transplant))
+#' cl[[1]]
+#' eval(cl[[1]]$call)
 #'
 #'
 #' ## example from cmprsk::crr
@@ -53,12 +69,12 @@
 #' dimnames(cov)[[2]] <- c('x1','x2','x3')
 #' print(z <- crr(ftime,fstatus,cov))
 #' summary(z)
-#' # deviance(z)
+#' deviance(z)
 #'
 #' dat <- data.frame(ftime = ftime, fstatus = fstatus, cov)
 #' (z2 <- crr2(Surv(ftime, fstatus(0) == 1) ~ ., dat, cox = FALSE))
 #' z$call <- z2[[1]]$call <- NULL
-#' stopifnot(identical(z, z2[[1]]))
+#' all.equal(z[names(z)], z2[[1]][names(z)])
 #'
 #' @export
 
@@ -96,29 +112,41 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, ...) {
     n <- as.integer(sum(idx))
     message(n, ' observations removed due to missingness', domain = NA)
     data <- data[!idx, ]
+    assign(as.character(name), data)
   } else
     n <- 0L
 
-  cov1 <- model.matrix(formula, data)[, -1L, drop = FALSE]
+  ## add model.frame for other use
+  mf <- model.frame(reformulate(rhs, lhs[1L]), data)
+  # cov1 <- model.matrix(formula, data)[, -1L, drop = FALSE]
+  
   crrs <- lapply(crisks, function(x) {
     ftime <- lhs[1L]
     fstatus <- lhs[2L]
-    cl <- substitute(
-      crr(data[, ftime], data[, fstatus], cov1 = cov1,
-          cencode = cencode, failcode = x, ...),
-      list(data = name, ftime = ftime, fstatus = fstatus,
-           cencode = cencode, x = x)
-    )
-    fit <- eval(cl)
     # fit <- crr(data[, lhs[1L]], data[, lhs[2L]], cov1 = cov1,
     #            cencode = cencode, failcode = x, ...)
-    fit$n.missing <- n
-    fit
+    
+    ## substitute to get a more helpful call -- can run crr directly
+    fit <- substitute(
+      crr(data[, ftime], data[, fstatus],
+          cov1 = model.matrix(formula, data)[, -1L, drop = FALSE],
+          cencode = cencode, failcode = x, ...),
+      list(data = name, ftime = ftime, fstatus = fstatus,
+           formula = formula, cencode = cencode, x = x)
+    )
+    fit <- eval(fit)
+    
+    fit$nuftime     <- c(table(data[data[, fstatus] %in% x, ftime]))
+    fit$n.missing   <- n
+    attr(fit, 'model.frame') <- mf
+    
+    structure(fit, class = c('crr', 'crr2'))
   })
-  crrs <- structure(crrs, .Names = paste('CRR:', crisks), class = 'crr2')
+  crrs <- structure(
+    crrs, .Names = paste('CRR:', crisks), class = c('crr2', 'crr')
+  )
   
   ## add model.frame for other use
-  mf <- model.frame(reformulate(rhs, lhs[1L]), data)
   attr(crrs, 'model.frame') <- mf
   # names(crrs) <- paste('CRR:', crisks)
 
@@ -133,7 +161,7 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, ...) {
   cph$call$data <- name
   cph <- list('Cox PH' = cph)
 
-  structure(c(cph, crrs), class = 'crr2')
+  structure(c(cph, crrs), class = c('crr2', 'crr'))
 }
 
 tidy_ <- function(x, conf.int = 0.95, ...) {
@@ -149,7 +177,8 @@ tidy_ <- function(x, conf.int = 0.95, ...) {
 
 #' \code{crr2} summary method
 #'
-#' @param object an object of class \code{"crr2"}
+#' @param object an object of class \code{\link{crr2}}
+#' @param conf.int level of confidence
 #' @param ... additional arguments affecting the summary produced
 #' @param html logical; if \code{TRUE}, an \code{\link{htmlTable}} will be
 #' returned; otherwise, a matrix
@@ -200,15 +229,29 @@ summary.crr2 <- function(object, conf.int = 0.95, ..., html = TRUE,
     # })
     o <- gsub('<', '&lt;', o, fixed = TRUE)
     o <- gsub('>', '&gt;', o, fixed = TRUE)
-    htmlTable(o, ..., css.cell = 'padding: 0px 5px 0px;',
-              cgroup = names(object), n.cgroup = lengths(object))
+    
+    ## bug in htmlTable v1.9 with class == c('html', ...)
+    structure(
+      htmlTable(o, ..., css.cell = 'padding: 0px 5px 0px;',
+                cgroup = names(object), n.cgroup = lengths(object)),
+      class = 'htmlTable'
+    )
   } else o
 }
 
-#' @rdname crr2
+#' \code{crr2} print method
+#' 
+#' @param x an object of class \code{\link{crr2}}
+#' @param ... ignored
+#' 
+#' @seealso
+#' \code{\link{crr2}}
+#' 
 #' @export
 print.crr2 <- function(x, ...) {
-  print(x[seq_along(x)])
+  if (inherits(x, 'crr2')) {
+    print(unclass(x)[seq_along(x)])
+  } else print(x)
   invisible(x)
 }
 
