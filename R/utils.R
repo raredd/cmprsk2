@@ -1,9 +1,11 @@
 ### utils
-# %ni% assert_class, is.loaded, terms.inner, trimwsq
+# %ni%, %||%, islist, assert_class, is.loaded, terms.inner, trimwsq
 ###
 
 
-'%ni%' <- function(x, table) !(match(x, table, nomatch = 0L) > 0L)
+`%ni%` <- function(x, table) !(match(x, table, nomatch = 0L) > 0L)
+
+`%||%` <- function(x, y) if (is.null(x)) y else x
 
 assert_class <- function(x, class, which = FALSE, message = NULL, warn = FALSE) {
   FUN <- if (warn)
@@ -21,6 +23,8 @@ assert_class <- function(x, class, which = FALSE, message = NULL, warn = FALSE) 
 is.loaded <- function(package) {
   any(grepl(sprintf('package:%s', package), search()))
 }
+
+islist <- function(x) inherits(x, 'list')
 
 terms.inner <- function(x) {
   ## survival:::terms.inner with modifications
