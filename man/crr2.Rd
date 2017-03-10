@@ -2,12 +2,9 @@
 % Please edit documentation in R/form.R
 \name{crr2}
 \alias{crr2}
-\alias{print.crr2}
 \title{Competing risks regression}
 \usage{
 crr2(formula, data, which = NULL, cox = FALSE, ...)
-
-\method{print}{crr2}(x, ...)
 }
 \arguments{
 \item{formula}{a formula object of form
@@ -27,6 +24,14 @@ fit modeling the event of interest}
 
 \item{...}{additional arguments passed to \code{\link[cmprsk]{crr}}}
 }
+\value{
+A list of \code{\link{crr}} objects with some additional attributes:
+
+\item{\code{$nuftime}}{a vector with the number of times each unique
+failure time \code{$uftime} was seen}
+\item{\code{attr(, "model.frame")}}{the \code{\link{model.frame}}, i.e.,
+\code{cov1}, used in the call to \code{\link{crr}}}
+}
 \description{
 Regression modeling of subdistribution functions in competing risks.
 }
@@ -37,11 +42,17 @@ form <- Surv(futime, event(censored) == death) ~ age + sex + abo
 crrs <- crr2(form, transplant, which = 'ltx', cox = TRUE)
 
 summary(crrs)
-
 library('htmlTable')
 summary(crrs)
 
 crr2(form, transplant, cox = TRUE, variance = FALSE)
+
+
+## use the call from a crr2 object to run cmprsk::crr
+cl <- crr2(Surv(futime, event(censored) == death) ~ age + sex + abo,
+           na.omit(transplant))
+cl[[1]]
+eval(cl[[1]]$call)
 
 
 ## example from cmprsk::crr
@@ -54,12 +65,12 @@ cov <- matrix(runif(600),nrow=200)
 dimnames(cov)[[2]] <- c('x1','x2','x3')
 print(z <- crr(ftime,fstatus,cov))
 summary(z)
-# deviance(z)
+deviance(z)
 
 dat <- data.frame(ftime = ftime, fstatus = fstatus, cov)
 (z2 <- crr2(Surv(ftime, fstatus(0) == 1) ~ ., dat, cox = FALSE))
 z$call <- z2[[1]]$call <- NULL
-stopifnot(identical(z, z2[[1]]))
+all.equal(z[names(z)], z2[[1]][names(z)])
 
 }
 \seealso{

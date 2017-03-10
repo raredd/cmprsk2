@@ -6,20 +6,17 @@
 \alias{crrfit}
 \alias{deviance.crr}
 \alias{extractAIC.crr}
-\alias{extractBIC.crr}
 \alias{extractIC}
 \alias{logLik.crr}
 \title{\code{crr} model fit statistics}
 \usage{
+extractIC(object, ic = c("AIC", "BIC", "AICc", "BICc"), p)
+
 \method{extractAIC}{crr}(object, ...)
 
 \method{AIC}{crr}(object, ...)
 
-extractBIC.crr(object, ...)
-
 \method{BIC}{crr}(object, ...)
-
-extractIC(object, ic = c("AIC", "BIC", "AICc", "BICc"), p)
 
 \method{logLik}{crr}(object, ...)
 
@@ -28,18 +25,18 @@ extractIC(object, ic = c("AIC", "BIC", "AICc", "BICc"), p)
 \arguments{
 \item{object}{an object of class \code{\link[cmprsk]{crr}}}
 
-\item{...}{ignored}
-
 \item{ic}{information criterion, one of \code{"AIC"}, \code{"BIC"},
 \code{"AICc"}, or \code{"BICc"}; see details}
 
-\item{k}{numeric specifying the "weight" of the equivalent degrees of
-freedom (\code{=: edf}) part in the AIC formula}
+\item{p}{an optional penalty term to be multiplied by, \code{k}, the
+number of free parameters estimated in each model including the intercept
+term}
+
+\item{...}{additional arguments passed to or from other methods}
 }
 \description{
-Functions to assess the quality of fitted \code{\link[cmprsk]{crr}} models.
-
-Extract AIC from a \code{crr} model
+Functions to assess the quality of fitted \code{\link[cmprsk]{crr}}
+and \code{\link{crr2}} objects.
 
 Select multiple types of Akaike or Bayesian (Schwarz) information
 criterion from a \code{\link[cmprsk]{crr}} object to assess the relative
@@ -55,17 +52,31 @@ the model is univariate, linear, and has normally-distributed residuals
 competing risks data subject to right censoring (Kuk, 2013).
 }
 \examples{
-fit <- crr2(Surv(futime, event(censored) == death) ~ age, transplant)
-extractAIC(fit[[1]])
-AIC(fit[[1]])
+crrs <- crr2(Surv(futime, event(censored) == death) ~ age, transplant)
+crr1 <- crrs[[1L]]
 
+coef(crr1)
+coefficients(crr1)
+
+extractAIC(crr1)
+sapply(crrs, AIC)
+
+## these are the same
+extractIC(crrs[[1L]], p = 0)
+-2 * logLik(crrs[[1]])[1]
+-2 * crrs[[1]]$loglik
+
+deviance(crr1)
+
+crrFits(crr1)
+crrwald.test(crr1)
 
 }
 \references{
 Kuk D, Varadhan R. Model selection in competing risks regression.
 \emph{Stat Med}. 2013 Aug \strong{15};32.
-
-Kuk D, Varadhan R. Model selection in competing risks regression.
-\emph{Stat Med}. 2013 Aug \strong{15};32.
+}
+\seealso{
+\code{\link{crrFits}}; \code{\link{crrwald.test}}
 }
 

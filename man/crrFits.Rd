@@ -18,12 +18,20 @@ saturated model compared to the null model. Note that comparisons among
 models only make sense for ones fit to the same data set.
 }
 \examples{
+\dontrun{
+## example, figures, tables from
+## http:..www.nature.com/bmt/journal/v45/n9/full/bmt2009359a.html
+
 bmt <- read.csv('http://www.stat.unipg.it/luca/R/bmtcrr.csv')
-cov1 <- with(bmt, model.matrix(~ Age + relevel(Sex, 'M') + D +
-             relevel(Phase, 'Relapse') + Source)[, -1])
+bmt <- within(bmt, {
+  Sex <- relevel(Sex, 'M')
+  Phase <- relevel(Phase, 'Relapse')
+})
+cov1 <- with(bmt, model.matrix(~ Age + Sex + D + Phase + Source)[, -1])
+
 m1 <- with(bmt, crr(ftime, Status, cov1))
 summary(m1)
-aod::wald.test(m1$var, m1$coef, grep('Phase', names(m1$coef)))$result$chi2
+crrwald.test(m1, c(Phase = 'Phase'))
 
 ## model selection
 m2 <- with(bmt, crr(ftime, Status, cov1[, c(4:6)]))
@@ -34,24 +42,30 @@ m6 <- with(bmt, crr(ftime, Status, cov1[, c(4:6,7,3)]))
 
 crrFits(m1, m2, m3, m4, m5, m6, p = 3)
 
-par(mfrow = c(1,3))
-for (ii in 1:ncol(m2$res))
-  scatter.smooth(m2$uftime, m2$res[, ii],
-                 main = names(coef(m2))[ii],
-                 xlab = 'Failure time',
-                 ylab = 'Schoenfeld residuals')
+par(mfrow = c(2,2))
+with(m2, {
+  for (ii in 1:ncol(res))
+    scatter.smooth(uftime, res[, ii],
+                   main = gsub('Phase', '', names(coef)[ii]),
+                   xlab = 'Failure time',
+                   ylab = 'Schoenfeld residuals')
+})
 
-pred <- with(bmt, model.matrix(~ levels(relevel(Phase, 'Relapse')))[, -1])
+pred <- with(bmt, model.matrix(~ levels(Phase)))[, -1L]
 pred <- predict(m2, pred)
-plot(pred, xlab = 'Failure time', ylab = 'CIF', lty = 1:4)
-legend('topleft', lty = 1:4, title = 'Phase', bty = 'n',
-       legend = levels(relevel(bmt$Phase, "Relapse")))
 
+plot(pred, xlab = 'Failure time', ylab = 'CIF', col = 1:4, lt = 1)
+legend('topleft',title = 'Phase', bty = 'n', legend = levels(bmt$Phase),
+       lty = 1, col = 1:4)
+}
 
 }
 \references{
 Scrucca L, Santucci A, Aversa F (2009). Regression Modeling of Competing
 Risk Using R: An In Depth Guide for Clinicians. \emph{Bone Marrow
-Transplantation} (2010) \strong{45}, 1388–1395.
+Transplantation} (2010) \strong{45}, 1388-1395.
+}
+\seealso{
+\code{\link{crrfit}}
 }
 

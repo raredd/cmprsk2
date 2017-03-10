@@ -3,7 +3,7 @@
 \name{coef.crr}
 \alias{coef.crr}
 \alias{coefficients.crr}
-\title{ct \code{crr} model coefficients}
+\title{\code{crr} model coefficients}
 \usage{
 \method{coef}{crr}(object, ...)
 
@@ -15,6 +15,6 @@
 \item{...}{ignored}
 }
 \description{
-ct \code{crr} model coefficients
+\code{crr} model coefficients
 }
 

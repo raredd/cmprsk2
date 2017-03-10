@@ -8,7 +8,9 @@
   combine_ci = FALSE, digits = 2L, format_p = TRUE)
 }
 \arguments{
-\item{object}{an object of class \code{"crr2"}}
+\item{object}{an object of class \code{\link{crr2}}}
+
+\item{conf.int}{level of confidence}
 
 \item{...}{additional arguments affecting the summary produced}
 
