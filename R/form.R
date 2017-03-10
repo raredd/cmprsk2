@@ -215,7 +215,7 @@ summary.crr2 <- function(object, conf.int = 0.95, ..., html = TRUE,
   ## remove crr2 list labels
   colnames(o) <- gsub('.*\\.', '', colnames(o))
   
-  if (!is.loaded('htmlTable')) {
+  if (html && !is.loaded('htmlTable')) {
     message('The \'htmlTable\' package is not loaded', domain = NA)
     html <- FALSE
   }
@@ -236,7 +236,13 @@ summary.crr2 <- function(object, conf.int = 0.95, ..., html = TRUE,
                 cgroup = names(object), n.cgroup = lengths(object)),
       class = 'htmlTable'
     )
-  } else o
+  } else {
+    o <- lapply(seq.int(ncol(o) / 4), function(x) {
+      x <- x * 4
+      o[, (x - 4 + 1):x]
+    })
+    setNames(o, names(object))
+  }
 }
 
 #' \code{crr2} print method
