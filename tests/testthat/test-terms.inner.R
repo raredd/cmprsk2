@@ -1,19 +1,39 @@
 context('terms.inner')
 
-# x <- Surv(time, status(0) == 'event') ~ age + sex
-# gsub('Surv\\(.*(?:==|%in%)\\s*[\'\" ]*?(.*)[\'\" ]*\\s*\\)|.', '\\1', deparse(x))
-# gsub('Surv\\(.*(?:==|%in%)\\s*[\'\"]?(.*)[\'\"]?\\s*\\)|.', '\\1', deparse(form))
-
-test_that('terms.inner parses formula', {
-  
-  expect_identical(trimwsq(c(' "x"', 'x\'s', ' x ""', 'x')),
-                   c('x', 'x\'s', 'x', 'x'))
+test_that('terms.inner parses crr2 formula', {
   
   l <- list(c('time', 'status', 'x', 'y'), c('0', '1'), c('Censored', 'Event'))
+  attr(l, 'dots') <- FALSE
   
-  expect_identical(terms.inner(Surv(time, status(0) == 1) ~ x + y), l[-3])
-  expect_identical(terms.inner(Surv(time, status(Censored) == Event) ~ x + y), l[-2])
-  expect_identical(terms.inner(Surv(time, status("Censored")==Event) ~ x + y), l[-2])
-  expect_identical(terms.inner(Surv(time, status(0)%in%'1') ~ x + y), l[-2])
-  expect_identical(terms.inner(Surv(time, status()%in%'1') ~ x + y), l[-2])
+  ## terms.inner adds attributes not needed in tests
+  expect_identical_no_attr <- function(object, expected, ...) {
+    attributes(object) <- attributes(expected) <- NULL
+    expect_identical(object, expected, ...)
+  }
+  
+  expect_identical_no_attr(
+    terms.inner(Surv(time, status(0) == 1) ~ x + y),
+    l[-3L]
+  )
+  
+  expect_identical_no_attr(
+    terms.inner(Surv(time, status(Censored) == Event) ~ x + y),
+    l[-2L]
+  )
+  
+  expect_identical_no_attr(
+    terms.inner(Surv(time, status("Censored")==Event) ~ x + y),
+    l[-2L]
+  )
+  
+  expect_identical_no_attr(
+    terms.inner(Surv(time, status(0)%in%'1') ~ x + y),
+    l[-3L]
+  )
+  
+  expect_identical_no_attr(
+    terms.inner(Surv(time, status('0')%in%'1') ~ x + y),
+    l[-3L]
+  )
+  
 })
