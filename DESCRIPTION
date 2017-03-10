@@ -11,12 +11,9 @@ Depends:
     cmprsk,
     survival
 Imports:
-    htmlTable,
-    rpart
+    htmlTable
 Suggests:
     knitr,
-    markdown,
-    survival,
     testthat
 License: GPL-2
 LazyData: yes

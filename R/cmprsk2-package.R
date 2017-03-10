@@ -5,5 +5,5 @@
 #' @name cmprsk2-package
 #' @aliases cmprsk2
 #' @docType package
-#' @import cmprsk graphics htmlTable rpart stats utils
+#' @import cmprsk graphics htmlTable survival stats utils
 NULL
