@@ -1,4 +1,4 @@
-### stat
+### stat functions
 # extractAIC.crr, AIC.crr, BIC.crr, extractIC, logLik.crr, deviance.crr,
 # coef.crr, coefficients.crr, terms.crr2, terms.crr, crrFits, crrWald.test
 # 
