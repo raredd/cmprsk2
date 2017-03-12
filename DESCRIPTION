@@ -6,7 +6,7 @@ Authors@R: person("Robert", "Redd", email = "rredd@jimmy.harvar.edu",
   role = c("aut", "cre"))
 Author: Robert Redd
 Maintainer: Robert Redd <rredd@jimmy.harvard.edu>
-Description: Extensions to cmprsk package.
+Description: Extensions for the cmprsk package.
 Depends:
     cmprsk,
     survival
