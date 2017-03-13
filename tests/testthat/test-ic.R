@@ -21,7 +21,7 @@ test_that('IC aliases return identical results', {
   )
   
   expect_identical(
-    logLik(crr)[[1]], crr$loglik
+    logLik(crr)[[1L]], crr$loglik
   )
   
 })
