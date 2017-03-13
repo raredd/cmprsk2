@@ -25,6 +25,19 @@ assert_class <- function(x, class, which = FALSE, message = NULL, warn = FALSE) 
   invisible(TRUE)
 }
 
+crr2_formula <- function(x) {
+  x <- if (is.character(x) ||
+           length(rapply(as.list(x)[2L], function(y)
+             length(as.list(y)))) == 1L)
+    deparse(x) else deparse(x[[2L]])
+  
+  ## checks for status(0) but not status(0) == 1
+  # grepl('[^(]+\\([^(~]+\\((?=.+~|[^~]+$)', x, perl = TRUE)
+  
+  ## asserts status(0) == 1
+  grepl('Surv\\([^(]+\\([^(]+\\)\\s*(==|%in%)[^)]+\\)', x)
+}
+
 is.loaded <- function(package) {
   any(grepl(sprintf('package:%s', package), search()))
 }
@@ -35,11 +48,18 @@ terms.inner <- function(x, survival = FALSE) {
   ## survival:::terms.inner with modifications
   if (inherits(x, 'formula')) {
     if (length(x) == 3L) {
-      cc <- strsplit(gsub('^.*\\(|\\)', '', deparse(x[[2L]])), '==|%in%')[[1L]]
-      x <- as.formula(gsub('\\([^(]*?\\)', '', deparse(x)))
-      terms3 <- terms.inner(x[[3L]])
-      structure(list(c(terms.inner(x[[2L]]), terms3), trimwsq(cc)),
-                dots = any(terms3 == '.'))
+      if (!crr2_formula(x)) {
+        cc <- list(NULL)
+        terms2 <- sterms.inner(x[[2L]])
+        terms3 <- sterms.inner(x[[3L]])
+      } else {
+        cc <- strsplit(gsub('^.*\\(|\\)', '', deparse(x[[2L]])), '==|%in%')
+        cc <- trimwsq(cc[[1L]])
+        x <- as.formula(sub('\\([^(]*?\\)', '', deparse(x)))
+        terms2 <- terms.inner(x[[2L]])
+        terms3 <- sterms.inner(x[[3L]])
+      }
+      structure(list(c(terms2, terms3), cc), dots = any(terms3 == '.'))
     } else terms.inner(x[[2L]])
   } else if (class(x) == 'call' &&
              (x[[1L]] != as.name('$') &&
