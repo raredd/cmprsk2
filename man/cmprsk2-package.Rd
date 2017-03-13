@@ -6,6 +6,6 @@
 \alias{cmprsk2-package}
 \title{cmprsk2}
 \description{
-Extensions to \pkg{\link[=crr]{cmprsk}} package.
+Extensions for the \pkg{\link[=crr]{cmprsk}} package.
 }
 
