@@ -18,7 +18,9 @@
 #' interest; if given, no other models are returned
 #' @param cox logical; if \code{TRUE}, a \code{\link{coxph}} model is also
 #' fit modeling the event of interest
-#' @param ... additional arguments passed to \code{\link[cmprsk]{crr}}
+#' @param variance logical; if \code{FALSE}, suppresses computation of the
+#' variance estimate and residuals
+#' @param ... (ignored) additional arguments passed to \code{\link[cmprsk]{crr}}
 #' 
 #' @return
 #' A list of \code{\link{crr}} objects with some additional attributes:
@@ -34,16 +36,21 @@
 #' \code{\link[survival]{coxph}}
 #'
 #' @examples
+#' ## 'formula' is a regular formula object with additional
+#' ## indications for the censoring and failure codes
+#' 
 #' crr2(Surv(futime, event(censored) == death) ~ age + sex + abo, transplant)
+#' crr2(Surv(futime, event(censored) %in% death) ~ relevel(abo, 'O'), transplant)
 #' 
 #' form <- Surv(futime, event(censored) == death) ~ age + sex + abo
-#' crrs <- crr2(form, transplant, which = 'ltx', cox = TRUE)
+#' crr2(form, transplant[transplant$age > 55, ], cox = TRUE, variance = FALSE)
 #' 
-#' summary(crrs)
+#' 
+#' ## use the summary method to compare models easily
+#' crrs <- crr2(form, transplant, which = 'ltx', cox = TRUE)
+#' summary(crrs, html = FALSE)
 #' library('htmlTable')
 #' summary(crrs)
-#' 
-#' crr2(form, transplant, cox = TRUE, variance = FALSE)
 #' 
 #' 
 #' ## use the call from a crr2 object to run cmprsk::crr
@@ -72,17 +79,21 @@
 #'
 #' @export
 
-crr2 <- function(formula, data, which = NULL, cox = FALSE, ...) {
+crr2 <- function(formula, data, which = NULL, cox = FALSE,
+                 variance = TRUE, ...) {
+  if (!crr2_formula(formula))
+    stop(
+      'Invalid formula - use the following structure or see ?crr2:\n',
+      '\tSurv(time, status(censor) == failure) ~ response',
+      call. = FALSE
+    )
+  
   term <- terms.inner(formula)
   form <- rapply(term, trimwsq, how = 'list')
   name <- substitute(data)
+  Name <- if (length(name) > 1L)
+    as.list(name)[[2L]] else name
   
-  # if ((!attr(term, 'dots') & any(form[[1L]] %ni% names(data))) ||
-  #     length(form[[2L]]) != 2L ||
-  #     any(form[[2L]] %ni% data[, form[[1L]][2L]]))
-  #   stop('Invalid formula - use the following structure or see ?crr2:\n',
-  #        '\tSurv(time, status(censor) == failure) ~ response', call. = FALSE)
-
   lhs  <- form[[1L]][1:2]
   rhs  <- if (attr(term, 'dots'))
     setdiff(names(data), lhs) else form[[1L]][-(1:2)]
@@ -90,11 +101,23 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, ...) {
   status   <- sort(unique(data[, lhs[2L]]))
   cencode  <- form[[2L]][1L]
   failcode <- form[[2L]][2L]
-
-  formula <- sprintf('Surv(%s, %s == %s)  ~ %s',
-                     lhs[1L], lhs[2L], shQuote(failcode),
-                     paste(rhs, collapse = ' + '))
-  formula <- as.formula(formula)
+  
+  if (length(wh <- setdiff(c(lhs, rhs), names(data))))
+    stop(
+      sprintf('Variable%s %s not found in %s',
+              ifelse(length(wh) > 1L, 's', ''),
+              paste(shQuote(wh), collapse = ', '), shQuote(name)),
+      call. = FALSE
+    )
+  if (any(c(cencode, failcode) %ni% data[, lhs[2L]]) |
+      (wh <- length(unique(data[, lhs[2L]])) <= 2L))
+    stop(
+      sprintf('Values %s and %s %sshould be in %s[, %s]',
+              shQuote(cencode), shQuote(failcode),
+              ifelse(wh > 2L, '', 'and at least one other unique value '),
+              deparse(name), shQuote(form[[1L]][2L])),
+      call. = FALSE
+    )
 
   ## all events of interest minus censored
   crisks  <- if (!is.null(which))
@@ -102,40 +125,51 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, ...) {
   stopifnot(length(crisks) >= 1L, failcode %in% status, cencode %in% status)
 
   idx <- !complete.cases(data[, c(lhs, rhs)])
-  if (any(idx)) {
-    n <- as.integer(sum(idx))
+  if (any(!!(n <- as.integer(sum(idx))))) {
     message(n, ' observations removed due to missingness', domain = NA)
     data <- data[!idx, ]
-    assign(as.character(name), data)
-  } else
-    n <- 0L
-
-  ## add model.frame for other use
-  mf <- model.frame(reformulate(rhs, lhs[1L]), data)
-  # cov1 <- model.matrix(formula, data)[, -1L, drop = FALSE]
+    assign(as.character(Name), data)
+  }
+  
+  formula <- sprintf('Surv(%s, %s == %s) ~ %s',
+                     lhs[1L], lhs[2L], shQuote(failcode),
+                     deparse(formula[[3L]]))
+  formula <- as.formula(formula)
+  
+  ## add model.frame for use in other methods
+  mf <- model.frame(formula, data)[, -1L, drop = FALSE]
+  mm <- model.matrix(formula, data)[, -1L, drop = FALSE]
   
   crrs <- lapply(crisks, function(x) {
     ftime <- lhs[1L]
     fstatus <- lhs[2L]
-    # fit <- crr(data[, lhs[1L]], data[, lhs[2L]], cov1 = cov1,
-    #            cencode = cencode, failcode = x, ...)
-    
+
     ## substitute to get a more helpful call -- can run crr directly
-    fit <- substitute(
+    call <- substitute(
       crr(data[, ftime], data[, fstatus],
           cov1 = model.matrix(formula, data)[, -1L, drop = FALSE],
-          cencode = cencode, failcode = x, ...),
+          cencode = cencode, failcode = x, variance = variance),
       list(data = name, ftime = ftime, fstatus = fstatus,
-           formula = update(formula, ~ .), cencode = cencode, x = x)
+           formula = call('~', formula[[3L]]), cencode = cencode,
+           x = x, variance = variance)
+    )
+
+    fit <- substitute(
+      crr(data[, ftime], data[, fstatus], cov1 = mm,
+          cencode = cencode, failcode = x, variance = variance),
+      list(ftime = ftime, fstatus = fstatus, cencode = cencode,
+           x = x, variance = variance)
     )
     fit <- eval(fit)
-    
-    fit$nuftime     <- c(table(data[data[, fstatus] %in% x, ftime]))
-    fit$n.missing   <- n
+    fit$call <- call
+
+    fit$nuftime   <- c(table(data[data[, fstatus] %in% x, ftime]))
+    fit$n.missing <- n
     attr(fit, 'model.frame') <- mf
-    
+
     structure(fit, class = c('crr', 'crr2'))
   })
+  
   crrs <- structure(
     crrs, .Names = paste('CRR:', crisks), class = c('crr2', 'crr')
   )

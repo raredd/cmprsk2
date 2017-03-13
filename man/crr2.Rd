@@ -4,7 +4,7 @@
 \alias{crr2}
 \title{Competing risks regression}
 \usage{
-crr2(formula, data, which = NULL, cox = FALSE, ...)
+crr2(formula, data, which = NULL, cox = FALSE, variance = TRUE, ...)
 }
 \arguments{
 \item{formula}{a formula object of form
@@ -22,7 +22,10 @@ interest; if given, no other models are returned}
 \item{cox}{logical; if \code{TRUE}, a \code{\link{coxph}} model is also
 fit modeling the event of interest}
 
-\item{...}{additional arguments passed to \code{\link[cmprsk]{crr}}}
+\item{variance}{logical; if \code{FALSE}, suppresses computation of the
+variance estimate and residuals}
+
+\item{...}{(ignored) additional arguments passed to \code{\link[cmprsk]{crr}}}
 }
 \value{
 A list of \code{\link{crr}} objects with some additional attributes:
@@ -36,16 +39,21 @@ failure time \code{$uftime} was seen}
 Regression modeling of subdistribution functions in competing risks.
 }
 \examples{
+## 'formula' is a regular formula object with additional
+## indications for the censoring and failure codes
+
 crr2(Surv(futime, event(censored) == death) ~ age + sex + abo, transplant)
+crr2(Surv(futime, event(censored) \%in\% death) ~ relevel(abo, 'O'), transplant)
 
 form <- Surv(futime, event(censored) == death) ~ age + sex + abo
-crrs <- crr2(form, transplant, which = 'ltx', cox = TRUE)
+crr2(form, transplant[transplant$age > 55, ], cox = TRUE, variance = FALSE)
 
-summary(crrs)
+
+## use the summary method to compare models easily
+crrs <- crr2(form, transplant, which = 'ltx', cox = TRUE)
+summary(crrs, html = FALSE)
 library('htmlTable')
 summary(crrs)
-
-crr2(form, transplant, cox = TRUE, variance = FALSE)
 
 
 ## use the call from a crr2 object to run cmprsk::crr
