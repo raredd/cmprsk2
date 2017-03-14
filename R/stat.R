@@ -44,13 +44,14 @@
 #' crrs <- crr2(Surv(futime, event(censored) == death) ~ age, transplant)
 #' crr1 <- crrs[[1L]]
 #' 
+#' crr1$coef
 #' coef(crr1)
 #' coefficients(crr1)
 #' 
 #' extractAIC(crr1)
 #' sapply(crrs, AIC)
 #' 
-#' ## these are the same
+#' ## these are equivalent
 #' extractIC(crrs[[1L]], p = 0)
 #' -2 * logLik(crrs[[1]])[1]
 #' -2 * crrs[[1]]$loglik
@@ -73,8 +74,8 @@ extractIC <- function(object, ic = c('AIC', 'BIC', 'AICc', 'BICc'), p) {
   
   ## get number of events of interest from function call
   ne <- tryCatch(
-    sum(object$nuftime) %||%
-      sum(eval(cl$fstatus) %in% eval(cl$failcode)),
+    sum(object$nuftime %||%
+          eval(cl$fstatus) %in% eval(cl$failcode)),
     error = function(e) {
       if (ic == 'BIC')
         warning('BIC is approximate: use p = # of events of interest',
@@ -150,16 +151,16 @@ coef.crr <- function(object, ...) {
 #' @export
 coefficients.crr <- coef.crr
 
-#' Model terms
+#' \code{crr2} model terms
 #' 
-#' @param x an object of class \code{\link[cmprsk]{crr}}
+#' @param x an object of class \code{\link{crr2}}
 #' @param ... ignored
 #' 
 #' @export
 
 terms.crr2 <- function(x, ...) {
   if (!inherits(x, 'crr2')) {
-    message('terms are not available for a \'crr\' object - try \'?crr2\'')
+    message('\'terms\' is not available for a \'crr\' object - try \'?crr2\'')
     return(invisible(NULL))
   }
   terms(attr(x, 'model.frame'))
@@ -176,11 +177,12 @@ terms.crr <- terms.crr2
 #' models only make sense for ones fit to the same data set.
 #' 
 #' @param ... one or more objects of class \code{\link[cmprsk]{crr}}
-#' @param p a penalty term to be multiplied by, \code{k}, the number of free
-#' parameters estimated in each model including the intercept term
+#' @param p an optional penalty term to be multiplied by, \code{k}, the
+#' number of free parameters estimated in each model including the intercept
+#' term
 #' 
 #' @seealso
-#' \code{\link{crrfit}}
+#' \code{\link{crrfit}}; \code{\link{crrwald.test}}
 #' 
 #' @references
 #' Scrucca L, Santucci A, Aversa F (2009). Regression Modeling of Competing
@@ -190,7 +192,7 @@ terms.crr <- terms.crr2
 #' @examples
 #' \dontrun{
 #' ## example, figures, tables from
-#' ## http:..www.nature.com/bmt/journal/v45/n9/full/bmt2009359a.html
+#' ## http://www.nature.com/bmt/journal/v45/n9/full/bmt2009359a.html
 #' 
 #' bmt <- read.csv('http://www.stat.unipg.it/luca/R/bmtcrr.csv')
 #' bmt <- within(bmt, {
@@ -224,9 +226,11 @@ terms.crr <- terms.crr2
 #' pred <- with(bmt, model.matrix(~ levels(Phase)))[, -1L]
 #' pred <- predict(m2, pred)
 #' 
-#' plot(pred, xlab = 'Failure time', ylab = 'CIF', col = 1:4, lt = 1)
-#' legend('topleft',title = 'Phase', bty = 'n', legend = levels(bmt$Phase),
-#'        lty = 1, col = 1:4)
+#' plot(pred, xlab = 'Failure time', ylab = 'CIF', col = 1:4, lty = 1,
+#'      ylim = c(0, 1))
+#' legend('top', lty = 1, col = 1:4, horiz = TRUE, bty = 'n',
+#'        title = 'Phase', legend = levels(bmt$Phase),
+#'        x.intersp = .1, y.intersp = 0.5)
 #' }
 #' 
 #' @export
@@ -311,7 +315,7 @@ crrFits <- function(..., p) {
 #' only one character string per test will be used
 #' 
 #' @seealso
-#' \code{\link[aod]{wald.test}}
+#' \code{\link[aod]{wald.test}}; \code{\link{crrfit}}; \code{\link{crrFits}}
 #' 
 #' @examples
 #' crrs <- crr2(Surv(futime, event(censored) == death) ~
@@ -332,7 +336,7 @@ crrFits <- function(..., p) {
 #' @export
 
 crrwald.test <- function(object, terms) {
-  stopifnot(inherits(object, 'crr'))
+  assert_class(object, 'crr')
   co <- coef(object)
   nn <- names(co)
   nt <- seq_along(co)
