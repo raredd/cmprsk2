@@ -55,13 +55,14 @@ competing risks data subject to right censoring (Kuk, 2013).
 crrs <- crr2(Surv(futime, event(censored) == death) ~ age, transplant)
 crr1 <- crrs[[1L]]
 
+crr1$coef
 coef(crr1)
 coefficients(crr1)
 
 extractAIC(crr1)
 sapply(crrs, AIC)
 
-## these are the same
+## these are equivalent
 extractIC(crrs[[1L]], p = 0)
 -2 * logLik(crrs[[1]])[1]
 -2 * crrs[[1]]$loglik

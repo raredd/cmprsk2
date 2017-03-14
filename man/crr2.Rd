@@ -17,10 +17,10 @@ the censor and failure of interest; note all other unique values of
 \code{formula}}
 
 \item{which}{optional character string giving the desired outcome of
-interest; if given, no other models are returned}
+interest; if given, no other \code{crr} models are returned}
 
 \item{cox}{logical; if \code{TRUE}, a \code{\link{coxph}} model is also
-fit modeling the event of interest}
+fit using the event of interest with all other events as censored}
 
 \item{variance}{logical; if \code{FALSE}, suppresses computation of the
 variance estimate and residuals}
@@ -30,8 +30,9 @@ variance estimate and residuals}
 \value{
 A list of \code{\link{crr}} objects with some additional attributes:
 
+\item{\code{$`Cox PH`}}{a \code{\link{coxph}} model if \code{cox = TRUE}}
 \item{\code{$nuftime}}{a vector with the number of times each unique
-failure time \code{$uftime} was seen}
+failure time, \code{$uftime}, was seen}
 \item{\code{attr(, "model.frame")}}{the \code{\link{model.frame}}, i.e.,
 \code{cov1}, used in the call to \code{\link{crr}}}
 }
@@ -39,14 +40,26 @@ failure time \code{$uftime} was seen}
 Regression modeling of subdistribution functions in competing risks.
 }
 \examples{
-## 'formula' is a regular formula object with additional
+## 'formula' as one would pass to survival::coxph with additional
 ## indications for the censoring and failure codes
 
-crr2(Surv(futime, event(censored) == death) ~ age + sex + abo, transplant)
-crr2(Surv(futime, event(censored) \%in\% death) ~ relevel(abo, 'O'), transplant)
+tp <- within(transplant, {
+  event_ind <- as.integer(event) - 1L
+  year <- NULL
+})
+
+## these are equivalent ways to call 'crr2'
+crr2(Surv(futime, event_ind(0) == 1) ~ age + sex + abo, tp)
+crr2(Surv(futime, event(censored) == death) ~ age + sex + abo, tp)
+
+
+## variables can be created or altered as usual
+crr2(Surv(futime, event(censored) \%in\% death) ~ cut(age, 3), tp)
+crr2(Surv(futime, event(censored) \%in\% death) ~ age + I(age ^ 2), tp)
+crr2(Surv(futime, event(censored) \%in\% death) ~ relevel(abo, 'O'), tp)
 
 form <- Surv(futime, event(censored) == death) ~ age + sex + abo
-crr2(form, transplant[transplant$age > 55, ], cox = TRUE, variance = FALSE)
+crr2(form, tp[tp$age > 55, ], cox = TRUE, variance = FALSE, which = 'death')
 
 
 ## use the summary method to compare models easily
@@ -82,7 +95,8 @@ all.equal(z[names(z)], z2[[1]][names(z)])
 
 }
 \seealso{
-\code{\link{summary.crr2}}; \code{\link[cmprsk]{crr}};
-\code{\link[survival]{coxph}}
+\code{\link[cmprsk]{crr}}; \code{\link{summary.crr2}};
+\code{\link{print.crr2}}; \code{\link{finegray2}};
+\code{\link[survival]{finegray}}; \code{\link[survival]{coxph}}
 }
 

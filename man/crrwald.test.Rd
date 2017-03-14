@@ -39,6 +39,6 @@ crrwald.test(crrs[[1L]], c(overall = '.', Age = 'age', ## or list()
 
 }
 \seealso{
-\code{\link[aod]{wald.test}}
+\code{\link[aod]{wald.test}}; \code{\link{crrfit}}; \code{\link{crrFits}}
 }
 

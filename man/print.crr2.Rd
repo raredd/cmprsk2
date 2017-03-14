@@ -15,6 +15,6 @@
 \code{crr2} print method
 }
 \seealso{
-\code{\link{crr2}}
+\code{\link{crr2}}; \code{\link{summary.crr2}}
 }
 

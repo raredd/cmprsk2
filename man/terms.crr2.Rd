@@ -3,18 +3,18 @@
 \name{terms.crr2}
 \alias{terms.crr}
 \alias{terms.crr2}
-\title{Model terms}
+\title{\code{crr2} model terms}
 \usage{
 \method{terms}{crr2}(x, ...)
 
 \method{terms}{crr}(x, ...)
 }
 \arguments{
-\item{x}{an object of class \code{\link[cmprsk]{crr}}}
+\item{x}{an object of class \code{\link{crr2}}}
 
 \item{...}{ignored}
 }
 \description{
-Model terms
+\code{crr2} model terms
 }
 

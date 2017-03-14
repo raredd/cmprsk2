@@ -29,4 +29,15 @@ otherwise, p-values will only be rounded}
 \description{
 \code{crr2} summary method
 }
+\examples{
+crrs <- crr2(Surv(futime, event(censored) == death) ~ age + sex + abo,
+             transplant)
+summary(crrs, html = FALSE)
+library('htmlTable')
+summary(crrs, html = TRUE)
+
+}
+\seealso{
+\code{\link{crr2}}; \code{\link{print.crr2}}
+}
 

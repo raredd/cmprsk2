@@ -9,8 +9,9 @@ crrFits(..., p)
 \arguments{
 \item{...}{one or more objects of class \code{\link[cmprsk]{crr}}}
 
-\item{p}{a penalty term to be multiplied by, \code{k}, the number of free
-parameters estimated in each model including the intercept term}
+\item{p}{an optional penalty term to be multiplied by, \code{k}, the
+number of free parameters estimated in each model including the intercept
+term}
 }
 \description{
 Return several types of fit statistics for a \code{\link[cmprsk]{crr}}
@@ -20,7 +21,7 @@ models only make sense for ones fit to the same data set.
 \examples{
 \dontrun{
 ## example, figures, tables from
-## http:..www.nature.com/bmt/journal/v45/n9/full/bmt2009359a.html
+## http://www.nature.com/bmt/journal/v45/n9/full/bmt2009359a.html
 
 bmt <- read.csv('http://www.stat.unipg.it/luca/R/bmtcrr.csv')
 bmt <- within(bmt, {
@@ -54,9 +55,11 @@ with(m2, {
 pred <- with(bmt, model.matrix(~ levels(Phase)))[, -1L]
 pred <- predict(m2, pred)
 
-plot(pred, xlab = 'Failure time', ylab = 'CIF', col = 1:4, lt = 1)
-legend('topleft',title = 'Phase', bty = 'n', legend = levels(bmt$Phase),
-       lty = 1, col = 1:4)
+plot(pred, xlab = 'Failure time', ylab = 'CIF', col = 1:4, lty = 1,
+     ylim = c(0, 1))
+legend('top', lty = 1, col = 1:4, horiz = TRUE, bty = 'n',
+       title = 'Phase', legend = levels(bmt$Phase),
+       x.intersp = .1, y.intersp = 0.5)
 }
 
 }
@@ -66,6 +69,6 @@ Risk Using R: An In Depth Guide for Clinicians. \emph{Bone Marrow
 Transplantation} (2010) \strong{45}, 1388-1395.
 }
 \seealso{
-\code{\link{crrfit}}
+\code{\link{crrfit}}; \code{\link{crrwald.test}}
 }
 

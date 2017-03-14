@@ -12,13 +12,16 @@
 
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
-assert_class <- function(x, class, which = FALSE, message = NULL, warn = FALSE) {
+assert_class <- function(x, class, which = FALSE,
+                         message = NULL, warn = FALSE) {
+  name <- substitute(x)
   FUN <- if (warn)
     function(...) warning(..., call. = FALSE)
   else function(...) stop(..., call. = FALSE)
   
   if (is.null(message))
-    message <- paste('Object is not of class', toString(shQuote(class)))
+    message <- paste(shQuote(name), 'is not of class',
+                     toString(shQuote(class)))
   
   if (!all(inherits(x, class, which)))
     FUN(message)

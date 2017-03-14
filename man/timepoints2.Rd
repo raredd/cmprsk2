@@ -16,7 +16,7 @@ timepoints2(w, times, digits = 3L, ci = TRUE, html = TRUE)
 
 \item{ci}{logical; not implemented}
 
-\item{html}{logical; if \code{TRUE}, html-friendly formatted is returned;
+\item{html}{logical; if \code{TRUE}, an html-friendly format is returned;
 the print method for \code{timepoints2} will use \code{\link{htmlTable}}
 if \code{html = TRUE}}
 
@@ -43,7 +43,7 @@ timepoints2(xx, html = FALSE)
 print(timepoints2(xx),
       rgroup = c('One', 'Two'), n.rgroup = c(3,3),
       caption = 'Timepoints<sup>&dagger;</sup>',
-      tfoot = '<sup>&dagger;</sup>Est &pm; sd')
+      tfoot = '<sup>&dagger;</sup>Estimate &pm; SD')
 
 }
 

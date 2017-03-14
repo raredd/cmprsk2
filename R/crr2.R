@@ -15,9 +15,9 @@
 #' @param data a data.frame in which to interpret the variables named in
 #' \code{formula}
 #' @param which optional character string giving the desired outcome of
-#' interest; if given, no other models are returned
+#' interest; if given, no other \code{crr} models are returned
 #' @param cox logical; if \code{TRUE}, a \code{\link{coxph}} model is also
-#' fit modeling the event of interest
+#' fit using the event of interest with all other events as censored
 #' @param variance logical; if \code{FALSE}, suppresses computation of the
 #' variance estimate and residuals
 #' @param ... (ignored) additional arguments passed to \code{\link[cmprsk]{crr}}
@@ -25,25 +25,39 @@
 #' @return
 #' A list of \code{\link{crr}} objects with some additional attributes:
 #' 
+#' \item{\code{$`Cox PH`}}{a \code{\link{coxph}} model if \code{cox = TRUE}}
 #' \item{\code{$nuftime}}{a vector with the number of times each unique
-#' failure time \code{$uftime} was seen}
+#' failure time, \code{$uftime}, was seen}
 #' \item{\code{attr(, "model.frame")}}{the \code{\link{model.frame}}, i.e.,
 #' \code{cov1}, used in the call to \code{\link{crr}}}
 #' 
 #'
 #' @seealso
-#' \code{\link{summary.crr2}}; \code{\link[cmprsk]{crr}};
-#' \code{\link[survival]{coxph}}
+#' \code{\link[cmprsk]{crr}}; \code{\link{summary.crr2}};
+#' \code{\link{print.crr2}}; \code{\link{finegray2}};
+#' \code{\link[survival]{finegray}}; \code{\link[survival]{coxph}}
 #'
 #' @examples
-#' ## 'formula' is a regular formula object with additional
+#' ## 'formula' as one would pass to survival::coxph with additional
 #' ## indications for the censoring and failure codes
 #' 
-#' crr2(Surv(futime, event(censored) == death) ~ age + sex + abo, transplant)
-#' crr2(Surv(futime, event(censored) %in% death) ~ relevel(abo, 'O'), transplant)
+#' tp <- within(transplant, {
+#'   event_ind <- as.integer(event) - 1L
+#'   year <- NULL
+#' })
+#' 
+#' ## these are equivalent ways to call 'crr2'
+#' crr2(Surv(futime, event_ind(0) == 1) ~ age + sex + abo, tp)
+#' crr2(Surv(futime, event(censored) == death) ~ age + sex + abo, tp)
+#' 
+#' 
+#' ## variables can be created or altered as usual
+#' crr2(Surv(futime, event(censored) %in% death) ~ cut(age, 3), tp)
+#' crr2(Surv(futime, event(censored) %in% death) ~ age + I(age ^ 2), tp)
+#' crr2(Surv(futime, event(censored) %in% death) ~ relevel(abo, 'O'), tp)
 #' 
 #' form <- Surv(futime, event(censored) == death) ~ age + sex + abo
-#' crr2(form, transplant[transplant$age > 55, ], cox = TRUE, variance = FALSE)
+#' crr2(form, tp[tp$age > 55, ], cox = TRUE, variance = FALSE, which = 'death')
 #' 
 #' 
 #' ## use the summary method to compare models easily
@@ -165,7 +179,10 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE,
 
     fit$nuftime   <- c(table(data[data[, fstatus] %in% x, ftime]))
     fit$n.missing <- n
-    attr(fit, 'model.frame') <- mf
+    
+    ## add model.frame, model.matrix for use in other methods
+    attr(fit, 'model.frame')  <- mf
+    attr(fit, 'model.matrix') <- mm
 
     structure(fit, class = c('crr', 'crr2'))
   })
@@ -174,17 +191,16 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE,
     crrs, .Names = paste('CRR:', crisks), class = c('crr2', 'crr')
   )
   
-  ## add model.frame for other use
-  attr(crrs, 'model.frame') <- mf
-  # names(crrs) <- paste('CRR:', crisks)
+  ## can probably get rid of this?
+  ## add model.frame, model.matrix for use in other methods
+  attr(crrs, 'model.frame')  <- mf
+  attr(crrs, 'model.matrix') <- mm
 
   if (!cox)
     return(crrs)
 
-  ## collapse all events to fit coxph (or adjust formula above)
-  # data[, lhs[2]] <- +(data[, lhs[2]] %in% crisks)
-  # data[, lhs[2]] <- +(data[, lhs[2]] %in% failcode)
-  cph <- substitute(survival::coxph(formula, data), list(formula = formula))
+  ## coxph model with event of interest and all others censored
+  cph <- substitute(coxph(formula, data), list(formula = formula))
   cph <- eval(cph)
   cph$call$data <- name
   cph <- list('Cox PH' = cph)
@@ -216,12 +232,22 @@ tidy_ <- function(x, conf.int = 0.95, ...) {
 #' @param digits integer value indicating number of digits to print
 #' @param format_p logical; if \code{TRUE}, p-values will be formatted;
 #' otherwise, p-values will only be rounded
+#' 
+#' @seealso
+#' \code{\link{crr2}}; \code{\link{print.crr2}}
+#' 
+#' @examples
+#' crrs <- crr2(Surv(futime, event(censored) == death) ~ age + sex + abo,
+#'              transplant)
+#' summary(crrs, html = FALSE)
+#' library('htmlTable')
+#' summary(crrs, html = TRUE)
 #'
 #' @export
 
 summary.crr2 <- function(object, conf.int = 0.95, ..., html = TRUE,
                          combine_ci = FALSE, digits = 2L, format_p = TRUE) {
-  stopifnot(inherits(object, 'crr2'))
+  assert_class(object, 'crr2')
   
   object <- lapply(object, tidy_, conf.int = conf.int, ...)
   object <- lapply(object, function(o) {
@@ -273,7 +299,7 @@ summary.crr2 <- function(object, conf.int = 0.95, ..., html = TRUE,
 #' @param ... ignored
 #' 
 #' @seealso
-#' \code{\link{crr2}}
+#' \code{\link{crr2}}; \code{\link{summary.crr2}}
 #' 
 #' @export
 print.crr2 <- function(x, ...) {

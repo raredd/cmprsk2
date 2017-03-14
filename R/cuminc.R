@@ -11,7 +11,7 @@
 #' @param w,times arguments passed to \code{\link{timepoints}}
 #' @param digits number of digits past the decimal point to keep
 #' @param ci logical; not implemented
-#' @param html logical; if \code{TRUE}, html-friendly formatted is returned;
+#' @param html logical; if \code{TRUE}, an html-friendly format is returned;
 #' the print method for \code{timepoints2} will use \code{\link{htmlTable}}
 #' if \code{html = TRUE}
 #' @param x an object of class \code{"timepoints2"}
@@ -32,12 +32,12 @@
 #' print(timepoints2(xx),
 #'       rgroup = c('One', 'Two'), n.rgroup = c(3,3),
 #'       caption = 'Timepoints<sup>&dagger;</sup>',
-#'       tfoot = '<sup>&dagger;</sup>Est &pm; sd')
+#'       tfoot = '<sup>&dagger;</sup>Estimate &pm; SD')
 #' 
 #' @export
 
 timepoints2 <- function(w, times, digits = 3L, ci = TRUE, html = TRUE) {
-  stopifnot(inherits(w, 'cuminc'))
+  assert_class(w, 'cuminc')
   tt <- na.omit(unlist(sapply(w, `[`, 'time')))
   rr <- range(tt)
   
@@ -58,7 +58,7 @@ timepoints2 <- function(w, times, digits = 3L, ci = TRUE, html = TRUE) {
 #' @rdname timepoints2
 #' @export
 print.timepoints2 <- function(x, ..., html = attr(x, 'html')) {
-  stopifnot(inherits(x, 'timepoints2'))
+  assert_class(x, 'timepoints2')
   x <- if (html) {
     x <- htmlTable::htmlTable(
       x, css.cell = 'padding: 0px 5px 0px; white-space: nowrap;', ...
