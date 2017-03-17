@@ -12,7 +12,7 @@
 \usage{
 extractIC(object, ic = c("AIC", "BIC", "AICc", "BICc"), p)
 
-\method{extractAIC}{crr}(object, ...)
+\method{extractAIC}{crr}(fit, scale, k = 2, ...)
 
 \method{AIC}{crr}(object, ...)
 
@@ -31,6 +31,8 @@ extractIC(object, ic = c("AIC", "BIC", "AICc", "BICc"), p)
 \item{p}{an optional penalty term to be multiplied by, \code{k}, the
 number of free parameters estimated in each model including the intercept
 term}
+
+\item{fit, scale, k}{see \code{\link{extractAIC}}}
 
 \item{...}{additional arguments passed to or from other methods}
 }

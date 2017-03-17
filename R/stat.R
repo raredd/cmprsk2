@@ -31,6 +31,7 @@
 #' @param p an optional penalty term to be multiplied by, \code{k}, the
 #' number of free parameters estimated in each model including the intercept
 #' term
+#' @param fit,scale,k see \code{\link{extractAIC}}
 #' @param ... additional arguments passed to or from other methods
 #' 
 #' @seealso
@@ -98,13 +99,15 @@ extractIC <- function(object, ic = c('AIC', 'BIC', 'AICc', 'BICc'), p) {
 
 #' @rdname crrfit
 #' @export
-extractAIC.crr <- function(object, ...) {
-  extractIC(object, 'AIC')
+extractAIC.crr <- function(fit, scale, k = 2, ...) {
+  extractIC(fit, p = k)
 }
 
 #' @rdname crrfit
 #' @export
-AIC.crr <- extractAIC.crr
+AIC.crr <- function(object, ...) {
+  extractIC(object, 'AIC')
+}
 
 #' @rdname crrfit
 #' @export
