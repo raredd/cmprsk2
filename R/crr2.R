@@ -7,20 +7,23 @@
 #'
 #' Regression modeling of subdistribution functions in competing risks.
 #'
-#' @param formula a formula object of form
-#' \code{Surv(time, status(censor) == failure) ~ response} where \code{censor}
-#' and \code{failure} are labels of the \code{status} variable denoting
-#' the censor and failure of interest; note all other unique values of
-#' \code{status} will be considered competing risks
-#' @param data a data.frame in which to interpret the variables named in
+#' @param formula a \code{\link[=Surv]{survival object}} formula,
+#' \code{Surv(time, status(censor) == failure) ~ response}, where
+#' "\code{censor}" and "\code{failure}" are unique values of the
+#' "\code{status}" variable indicating the censor and failure codes of
+#' interest; note all other unique values of \code{status} will be treated
+#' as competing risks
+#' @param data a data frame in which to interpret the variables named in
 #' \code{formula}
 #' @param which optional character string giving the desired outcome of
-#' interest; if given, no other \code{crr} models are returned
-#' @param cox logical; if \code{TRUE}, a \code{\link{coxph}} model is also
-#' fit using the event of interest with all other events as censored
+#' interest (i.e., one of the unique values of the \code{status} variable);
+#' if given, no other \code{crr} models are returned
+#' @param cox logical; if \code{TRUE}, a \code{\link{coxph}} model is fit
+#' using the event of interest with all other events treated as censored
 #' @param variance logical; if \code{FALSE}, suppresses computation of the
 #' variance estimate and residuals
-#' @param ... (ignored) additional arguments passed to \code{\link[cmprsk]{crr}}
+#' @param cengroup,gtol,maxiter,init additional arguments passed to
+#' \code{\link[cmprsk]{crr}}
 #' 
 #' @return
 #' A list of \code{\link{crr}} objects with some additional attributes:
@@ -30,8 +33,7 @@
 #' failure time, \code{$uftime}, was seen}
 #' \item{\code{attr(, "model.frame")}}{the \code{\link{model.frame}}, i.e.,
 #' \code{cov1}, used in the call to \code{\link{crr}}}
-#' 
-#'
+#' s
 #' @seealso
 #' \code{\link[cmprsk]{crr}}; \code{\link{summary.crr2}};
 #' \code{\link{print.crr2}}; \code{\link{finegray2}};
@@ -93,9 +95,9 @@
 #'
 #' @export
 
-crr2 <- function(formula, data, which = NULL, cox = FALSE,
-                 variance = TRUE, ...) {
-  if (!crr2_formula(formula))
+crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
+                 cengroup, gtol = 1e-06, maxiter = 10, init) {
+  if (!is.crr2(formula))
     stop(
       'Invalid formula - use the following structure or see ?crr2:\n',
       '\tSurv(time, status(censor) == failure) ~ response',
@@ -137,10 +139,14 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE,
   crisks  <- if (!is.null(which))
     which else c(failcode, setdiff(status, c(cencode, failcode)))
   stopifnot(length(crisks) >= 1L, failcode %in% status, cencode %in% status)
+  
+  cengroup <- if (missing(cengroup))
+    rep_len(1L, nrow(data)) else cengroup
 
   idx <- !complete.cases(data[, c(lhs, rhs)])
   if (any(!!(n <- as.integer(sum(idx))))) {
     message(n, ' observations removed due to missingness', domain = NA)
+    cengroup <- cengroup[!idx]
     data <- data[!idx, ]
     assign(as.character(Name), data)
   }
@@ -153,6 +159,7 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE,
   ## add model.frame for use in other methods
   mf <- model.frame(formula, data)[, -1L, drop = FALSE]
   mm <- model.matrix(formula, data)[, -1L, drop = FALSE]
+  init <- rep_len(if (missing(init)) 0L else init, ncol(mm))
   
   crrs <- lapply(crisks, function(x) {
     ftime <- lhs[1L]
@@ -162,17 +169,24 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE,
     call <- substitute(
       crr(data[, ftime], data[, fstatus],
           cov1 = model.matrix(formula, data)[, -1L, drop = FALSE],
-          cencode = cencode, failcode = x, variance = variance),
+          cencode = cencode, failcode = x, variance = variance,
+          cengroup = cengroup, gtol = gtol, maxiter = maxiter, init = init),
       list(data = name, ftime = ftime, fstatus = fstatus,
            formula = call('~', formula[[3L]]), cencode = cencode,
-           x = x, variance = variance)
+           x = x, variance = variance, cengroup = cengroup,
+           gtol = gtol, maxiter = maxiter, init = init)
     )
+    call$cengroup <- if (length(un <- unique(cengroup)) == 1L)
+      substitute(rep(un, nrow(data)), list(un = un, data = name))
+    else call$cengroup
 
     fit <- substitute(
       crr(data[, ftime], data[, fstatus], cov1 = mm,
-          cencode = cencode, failcode = x, variance = variance),
+          cencode = cencode, failcode = x, variance = variance,
+          cengroup = cengroup, gtol = gtol, maxiter = maxiter, init = init),
       list(ftime = ftime, fstatus = fstatus, cencode = cencode,
-           x = x, variance = variance)
+           x = x, variance = variance, cengroup = cengroup,
+           gtol = gtol, maxiter = maxiter, init = init)
     )
     fit <- eval(fit)
     fit$call <- call

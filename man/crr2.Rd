@@ -4,28 +4,32 @@
 \alias{crr2}
 \title{Competing risks regression}
 \usage{
-crr2(formula, data, which = NULL, cox = FALSE, variance = TRUE, ...)
+crr2(formula, data, which = NULL, cox = FALSE, variance = TRUE, cengroup,
+  gtol = 1e-06, maxiter = 10, init)
 }
 \arguments{
-\item{formula}{a formula object of form
-\code{Surv(time, status(censor) == failure) ~ response} where \code{censor}
-and \code{failure} are labels of the \code{status} variable denoting
-the censor and failure of interest; note all other unique values of
-\code{status} will be considered competing risks}
+\item{formula}{a \code{\link[=Surv]{survival object}} formula,
+\code{Surv(time, status(censor) == failure) ~ response}, where
+"\code{censor}" and "\code{failure}" are unique values of the
+"\code{status}" variable indicating the censor and failure codes of
+interest; note all other unique values of \code{status} will be treated
+as competing risks}
 
-\item{data}{a data.frame in which to interpret the variables named in
+\item{data}{a data frame in which to interpret the variables named in
 \code{formula}}
 
 \item{which}{optional character string giving the desired outcome of
-interest; if given, no other \code{crr} models are returned}
+interest (i.e., one of the unique values of the \code{status} variable);
+if given, no other \code{crr} models are returned}
 
-\item{cox}{logical; if \code{TRUE}, a \code{\link{coxph}} model is also
-fit using the event of interest with all other events as censored}
+\item{cox}{logical; if \code{TRUE}, a \code{\link{coxph}} model is fit
+using the event of interest with all other events treated as censored}
 
 \item{variance}{logical; if \code{FALSE}, suppresses computation of the
 variance estimate and residuals}
 
-\item{...}{(ignored) additional arguments passed to \code{\link[cmprsk]{crr}}}
+\item{cengroup, gtol, maxiter, init}{additional arguments passed to
+\code{\link[cmprsk]{crr}}}
 }
 \value{
 A list of \code{\link{crr}} objects with some additional attributes:
@@ -35,6 +39,7 @@ A list of \code{\link{crr}} objects with some additional attributes:
 failure time, \code{$uftime}, was seen}
 \item{\code{attr(, "model.frame")}}{the \code{\link{model.frame}}, i.e.,
 \code{cov1}, used in the call to \code{\link{crr}}}
+s
 }
 \description{
 Regression modeling of subdistribution functions in competing risks.
