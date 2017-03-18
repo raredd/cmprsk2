@@ -28,7 +28,17 @@ assert_class <- function(x, class, which = FALSE,
   invisible(TRUE)
 }
 
-crr2_formula <- function(x) {
+is.crr2 <- function(x) {
+  if (inherits(x, 'crr2'))
+    return(TRUE)
+  UseMethod('is.crr2')
+}
+
+is.crr2.default <- function(x) {
+  inherits(x, 'crr2')
+}
+
+is.crr2.formula <- function(x) {
   x <- if (is.character(x) ||
            length(rapply(as.list(x)[2L], function(y)
              length(as.list(y)))) == 1L)
@@ -51,7 +61,7 @@ terms.inner <- function(x, survival = FALSE) {
   ## survival:::terms.inner with modifications
   if (inherits(x, 'formula')) {
     if (length(x) == 3L) {
-      if (!crr2_formula(x)) {
+      if (!is.crr2(x)) {
         cc <- list(NULL)
         terms2 <- sterms.inner(x[[2L]])
         terms3 <- sterms.inner(x[[3L]])
