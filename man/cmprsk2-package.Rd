@@ -2,10 +2,9 @@
 % Please edit documentation in R/cmprsk2-package.R
 \docType{package}
 \name{cmprsk2-package}
-\alias{cmprsk2}
 \alias{cmprsk2-package}
+\alias{cmprsk2}
 \title{cmprsk2}
 \description{
 Extensions for the \pkg{\link[=crr]{cmprsk}} package.
 }
-

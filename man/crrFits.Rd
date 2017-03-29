@@ -71,4 +71,3 @@ Transplantation} (2010) \strong{45}, 1388-1395.
 \seealso{
 \code{\link{crrfit}}; \code{\link{crrwald.test}}
 }
-

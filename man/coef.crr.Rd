@@ -17,4 +17,3 @@
 \description{
 \code{crr} model coefficients
 }
-

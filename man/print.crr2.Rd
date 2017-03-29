@@ -17,4 +17,3 @@
 \seealso{
 \code{\link{crr2}}; \code{\link{summary.crr2}}
 }
-

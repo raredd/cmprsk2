@@ -104,4 +104,3 @@ all.equal(z[names(z)], z2[[1]][names(z)])
 \code{\link{print.crr2}}; \code{\link{finegray2}};
 \code{\link[survival]{finegray}}; \code{\link[survival]{coxph}}
 }
-

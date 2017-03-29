@@ -2,7 +2,7 @@ Package: cmprsk2
 Type: Package
 Title: cmprsk2
 Version: 0.0.0.9000
-Authors@R: person("Robert", "Redd", email = "rredd@jimmy.harvar.edu",
+Authors@R: person("Robert", "Redd", email = "rredd@jimmy.harvard.edu",
   role = c("aut", "cre"))
 Author: Robert Redd
 Maintainer: Robert Redd <rredd@jimmy.harvard.edu>
@@ -20,4 +20,4 @@ LazyData: yes
 URL: https://github.com/raredd/cmprsk2
 Roxygen: list(wrap = FALSE)
 VignetteBuilder: knitr
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

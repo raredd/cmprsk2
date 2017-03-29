@@ -40,4 +40,3 @@ summary(crrs, html = TRUE)
 \seealso{
 \code{\link{crr2}}; \code{\link{print.crr2}}
 }
-

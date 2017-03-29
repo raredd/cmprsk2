@@ -136,7 +136,7 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
     )
 
   ## all events of interest minus censored
-  crisks  <- if (!is.null(which))
+  crisks <- if (!is.null(which))
     which else c(failcode, setdiff(status, c(cencode, failcode)))
   stopifnot(length(crisks) >= 1L, failcode %in% status, cencode %in% status)
   
@@ -162,7 +162,7 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   init <- rep_len(if (missing(init)) 0L else init, ncol(mm))
   
   crrs <- lapply(crisks, function(x) {
-    ftime <- lhs[1L]
+    ftime   <- lhs[1L]
     fstatus <- lhs[2L]
 
     ## substitute to get a more helpful call -- can run crr directly
@@ -377,12 +377,9 @@ finegray2 <- function(formula, data, cencode, ...) {
     setdiff(names(data), c(svar, tvar)) else term[-(1:2)]
   
   status  <- sort(unique(data[, svar]))
-  cencode <- if (missing(cencode)) {
-    unique(grep('(?i)0|censor', status, value = TRUE))
-  } else {
-    cencode
-  }
-  crisks <- setdiff(status, cencode)
+  cencode <- if (missing(cencode))
+    unique(grep('(?i)0|censor', status, value = TRUE)) else cencode
+  crisks  <- setdiff(status, cencode)
   
   stopifnot(
     cencode %in% status,
