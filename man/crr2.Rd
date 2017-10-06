@@ -4,16 +4,16 @@
 \alias{crr2}
 \title{Competing risks regression}
 \usage{
-crr2(formula, data, which = NULL, cox = FALSE, variance = TRUE, cengroup,
-  gtol = 1e-06, maxiter = 10, init)
+crr2(formula, data, which = NULL, cox = FALSE, variance = TRUE,
+  cengroup = NULL, failcode = NULL, cencode = NULL, gtol = 1e-06,
+  maxiter = 10, init = NULL)
 }
 \arguments{
 \item{formula}{a \code{\link[=Surv]{survival object}} formula,
 \code{Surv(time, status(censor) == failure) ~ response}, where
-"\code{censor}" and "\code{failure}" are unique values of the
-"\code{status}" variable indicating the censor and failure codes of
-interest; note all other unique values of \code{status} will be treated
-as competing risks}
+\code{censor} and \code{failure} are unique values of the \code{status}
+variable indicating the censoring and failure codes of interest; note all
+other unique values of \code{status} will be treated as competing risks}
 
 \item{data}{a data frame in which to interpret the variables named in
 \code{formula}}
@@ -28,18 +28,21 @@ using the event of interest with all other events treated as censored}
 \item{variance}{logical; if \code{FALSE}, suppresses computation of the
 variance estimate and residuals}
 
-\item{cengroup, gtol, maxiter, init}{additional arguments passed to
+\item{cengroup, failcode, cencode}{additional arguments passed to
+\code{\link[cmprsk]{crr}}; these will be guessed from \code{formula} but
+may be overridden}
+
+\item{gtol, maxiter, init}{additional arguments passed to
 \code{\link[cmprsk]{crr}}}
 }
 \value{
-A list of \code{\link{crr}} objects with some additional attributes:
+A list of \code{\link{crr}} objects with some additional components:
 
-\item{\code{$`Cox PH`}}{a \code{\link{coxph}} model if \code{cox = TRUE}}
-\item{\code{$nuftime}}{a vector with the number of times each unique
+\item{\code{coxph}}{a \code{\link{coxph}} model if \code{cox = TRUE}}
+\item{\code{nuftime}}{a vector with the number of times each unique
 failure time, \code{$uftime}, was seen}
 \item{\code{attr(, "model.frame")}}{the \code{\link{model.frame}}, i.e.,
 \code{cov1}, used in the call to \code{\link{crr}}}
-s
 }
 \description{
 Regression modeling of subdistribution functions in competing risks.
@@ -55,6 +58,7 @@ tp <- within(transplant, {
 
 ## these are equivalent ways to call 'crr2'
 crr2(Surv(futime, event_ind(0) == 1) ~ age + sex + abo, tp)
+crr2(Surv(futime, event_ind(0) \%in\% 1) ~ age + sex + abo, tp)
 crr2(Surv(futime, event(censored) == death) ~ age + sex + abo, tp)
 
 
@@ -69,9 +73,10 @@ crr2(form, tp[tp$age > 55, ], cox = TRUE, variance = FALSE, which = 'death')
 
 ## use the summary method to compare models easily
 crrs <- crr2(form, transplant, which = 'ltx', cox = TRUE)
-summary(crrs, html = FALSE)
-library('htmlTable')
 summary(crrs)
+
+library('htmlTable')
+summary(crrs, html = TRUE)
 
 
 ## use the call from a crr2 object to run cmprsk::crr

@@ -1,5 +1,8 @@
 ### formula method for crr
-# crr2, tidy_, summary.crr2, print.crr2, finegray2
+# crr2, print.crr2, summary.crr2, finegray2
+# 
+# unexported:
+# tidy_
 ###
 
 
@@ -9,10 +12,9 @@
 #'
 #' @param formula a \code{\link[=Surv]{survival object}} formula,
 #' \code{Surv(time, status(censor) == failure) ~ response}, where
-#' "\code{censor}" and "\code{failure}" are unique values of the
-#' "\code{status}" variable indicating the censor and failure codes of
-#' interest; note all other unique values of \code{status} will be treated
-#' as competing risks
+#' \code{censor} and \code{failure} are unique values of the \code{status}
+#' variable indicating the censoring and failure codes of interest; note all
+#' other unique values of \code{status} will be treated as competing risks
 #' @param data a data frame in which to interpret the variables named in
 #' \code{formula}
 #' @param which optional character string giving the desired outcome of
@@ -22,18 +24,21 @@
 #' using the event of interest with all other events treated as censored
 #' @param variance logical; if \code{FALSE}, suppresses computation of the
 #' variance estimate and residuals
-#' @param cengroup,gtol,maxiter,init additional arguments passed to
+#' @param cengroup,failcode,cencode additional arguments passed to
+#' \code{\link[cmprsk]{crr}}; these will be guessed from \code{formula} but
+#' may be overridden
+#' @param gtol,maxiter,init additional arguments passed to
 #' \code{\link[cmprsk]{crr}}
 #' 
 #' @return
-#' A list of \code{\link{crr}} objects with some additional attributes:
+#' A list of \code{\link{crr}} objects with some additional components:
 #' 
-#' \item{\code{$`Cox PH`}}{a \code{\link{coxph}} model if \code{cox = TRUE}}
-#' \item{\code{$nuftime}}{a vector with the number of times each unique
+#' \item{\code{coxph}}{a \code{\link{coxph}} model if \code{cox = TRUE}}
+#' \item{\code{nuftime}}{a vector with the number of times each unique
 #' failure time, \code{$uftime}, was seen}
 #' \item{\code{attr(, "model.frame")}}{the \code{\link{model.frame}}, i.e.,
 #' \code{cov1}, used in the call to \code{\link{crr}}}
-#' s
+#' 
 #' @seealso
 #' \code{\link[cmprsk]{crr}}; \code{\link{summary.crr2}};
 #' \code{\link{print.crr2}}; \code{\link{finegray2}};
@@ -50,6 +55,7 @@
 #' 
 #' ## these are equivalent ways to call 'crr2'
 #' crr2(Surv(futime, event_ind(0) == 1) ~ age + sex + abo, tp)
+#' crr2(Surv(futime, event_ind(0) %in% 1) ~ age + sex + abo, tp)
 #' crr2(Surv(futime, event(censored) == death) ~ age + sex + abo, tp)
 #' 
 #' 
@@ -64,9 +70,10 @@
 #' 
 #' ## use the summary method to compare models easily
 #' crrs <- crr2(form, transplant, which = 'ltx', cox = TRUE)
-#' summary(crrs, html = FALSE)
-#' library('htmlTable')
 #' summary(crrs)
+#' 
+#' library('htmlTable')
+#' summary(crrs, html = TRUE)
 #' 
 #' 
 #' ## use the call from a crr2 object to run cmprsk::crr
@@ -96,7 +103,8 @@
 #' @export
 
 crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
-                 cengroup, gtol = 1e-06, maxiter = 10, init) {
+                 cengroup = NULL, failcode = NULL, cencode = NULL,
+                 gtol = 1e-06, maxiter = 10, init = NULL) {
   if (!is.crr2(formula))
     stop(
       'Invalid formula - use the following structure or see ?crr2:\n',
@@ -114,9 +122,9 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   rhs  <- if (attr(term, 'dots'))
     setdiff(names(data), lhs) else form[[1L]][-(1:2)]
   
-  status   <- sort(unique(data[, lhs[2L]]))
-  cencode  <- form[[2L]][1L]
-  failcode <- form[[2L]][2L]
+  status   <- levels(as.factor(data[, lhs[2L]]))
+  cencode  <- cencode  %||% form[[2L]][1L]
+  failcode <- failcode %||% form[[2L]][2L]
   
   if (length(wh <- setdiff(c(lhs, rhs), names(data))))
     stop(
@@ -140,8 +148,7 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
     which else c(failcode, setdiff(status, c(cencode, failcode)))
   stopifnot(length(crisks) >= 1L, failcode %in% status, cencode %in% status)
   
-  cengroup <- if (missing(cengroup))
-    rep_len(1L, nrow(data)) else cengroup
+  cengroup <- cengroup %||% rep_len(1L, nrow(data))
 
   idx <- !complete.cases(data[, c(lhs, rhs)])
   if (any(!!(n <- as.integer(sum(idx))))) {
@@ -159,7 +166,7 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   ## add model.frame for use in other methods
   mf <- model.frame(formula, data)[, -1L, drop = FALSE]
   mm <- model.matrix(formula, data)[, -1L, drop = FALSE]
-  init <- rep_len(if (missing(init)) 0L else init, ncol(mm))
+  init <- rep_len(if (is.null(init)) 0L else init, ncol(mm))
   
   crrs <- lapply(crisks, function(x) {
     ftime   <- lhs[1L]
@@ -198,11 +205,15 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
     attr(fit, 'model.frame')  <- mf
     attr(fit, 'model.matrix') <- mm
 
-    structure(fit, class = c('crr', 'crr2'))
+    structure(
+      fit,
+      class = c('crr', 'crr2')
+    )
   })
   
   crrs <- structure(
-    crrs, .Names = paste('CRR:', crisks), class = c('crr2', 'crr')
+    crrs, .Names = paste('CRR:', crisks),
+    class = c('crr2', 'crr')
   )
   
   ## can probably get rid of this?
@@ -217,27 +228,38 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   cph <- substitute(coxph(formula, data), list(formula = formula))
   cph <- eval(cph)
   cph$call$data <- name
-  cph <- list('Cox PH' = cph)
+  cph <- list(coxph = cph)
 
-  structure(c(cph, crrs), class = c('crr2', 'crr'))
+  structure(
+    c(cph, crrs),
+    class = c('crr2', 'crr')
+  )
 }
 
-tidy_ <- function(x, conf.int = 0.95, ...) {
-  ## clean up crr or coxph objects
-  # tidy_(coxph(Surv(time, status) ~ rx, colon))
-  assert_class(x, c('crr', 'coxph'))
-  s <- summary(x, conf.int = conf.int, ...)
-  
-  setNames(data.frame(s$conf.int[, -2L, drop = FALSE],
-                      s$coef[,  -(1:4), drop = FALSE]),
-           c('HR', 'LCI', 'UCI', 'p'))
+#' \code{crr2} print method
+#' 
+#' @param x an object of class \code{\link{crr2}}
+#' @param ... ignored
+#' 
+#' @seealso
+#' \code{\link{crr2}}; \code{\link{summary.crr2}}
+#' 
+#' @export
+
+print.crr2 <- function(x, ...) {
+  if (inherits(x, 'crr2')) {
+    print(unclass(x)[seq_along(x)])
+  } else print(x)
+  invisible(x)
 }
 
 #' \code{crr2} summary method
 #'
 #' @param object an object of class \code{\link{crr2}}
 #' @param conf.int level of confidence
-#' @param ... additional arguments affecting the summary produced
+#' @param ... additional arguments affecting the summary produced (passed
+#' to \code{\link[cmprsk]{summary.crr}} or
+#' \code{\link[survival]{summary.coxph}} depending on the object)
 #' @param html logical; if \code{TRUE}, an \code{\link{htmlTable}} will be
 #' returned; otherwise, a matrix
 #' @param combine_ci logical; if \code{FALSE}, upper and lower confidence
@@ -252,24 +274,32 @@ tidy_ <- function(x, conf.int = 0.95, ...) {
 #' 
 #' @examples
 #' crrs <- crr2(Surv(futime, event(censored) == death) ~ age + sex + abo,
-#'              transplant)
-#' summary(crrs, html = FALSE)
+#'              data = transplant)
+#' summary(crrs)
+#' 
+#' summary(crrs, conf.int = 0.9, digits = 3L,
+#'         combine_ci = TRUE, format_p = TRUE)
+#' 
+#' 
 #' library('htmlTable')
-#' summary(crrs, html = TRUE)
+#' summary(crrs, html = TRUE, combine_ci = TRUE)
 #'
 #' @export
 
-summary.crr2 <- function(object, conf.int = 0.95, ..., html = TRUE,
-                         combine_ci = FALSE, digits = 2L, format_p = TRUE) {
+summary.crr2 <- function(object, conf.int = 0.95, ..., html = FALSE,
+                         combine_ci = FALSE, digits = 2L, format_p = html) {
   assert_class(object, 'crr2')
+  
+  rFUN <- if (!html & !format_p & !combine_ci)
+    round else roundr
   
   object <- lapply(object, tidy_, conf.int = conf.int, ...)
   object <- lapply(object, function(o) {
     o[, -ncol(o)] <- lapply(o[, -ncol(o)], function(x)
-      sprintf('%.*f', digits, x))
+      rFUN(x, digits))
     within(o, {
       p <- if (format_p)
-        format.pval(p, 1, .01) else sprintf('%.*f', digits, p)
+        pvalr(p, .01, 3L, html, FALSE) else rFUN(p, digits)
       `HR (% CI)` <- sprintf('%s (%s, %s)', HR, LCI, UCI)
     })[, if (combine_ci) c('HR (% CI)', 'p') else -(ncol(o) + 1L)]
   })
@@ -299,28 +329,13 @@ summary.crr2 <- function(object, conf.int = 0.95, ..., html = TRUE,
       class = 'htmlTable'
     )
   } else {
-    o <- lapply(seq.int(ncol(o) / 4), function(x) {
-      x <- x * 4
-      o[, (x - 4 + 1):x]
+    div <- ifelse(combine_ci, 2L, 4L)
+    o <- lapply(seq.int(ncol(o) / div), function(x) {
+      x <- x * div
+      o[, (x - div + 1L):x]
     })
     setNames(o, names(object))
   }
-}
-
-#' \code{crr2} print method
-#' 
-#' @param x an object of class \code{\link{crr2}}
-#' @param ... ignored
-#' 
-#' @seealso
-#' \code{\link{crr2}}; \code{\link{summary.crr2}}
-#' 
-#' @export
-print.crr2 <- function(x, ...) {
-  if (inherits(x, 'crr2')) {
-    print(unclass(x)[seq_along(x)])
-  } else print(x)
-  invisible(x)
 }
 
 #' \code{finegray2}
@@ -337,19 +352,20 @@ print.crr2 <- function(x, ...) {
 #' 
 #' @examples
 #' ## example from survival::finegray
-#' dd <- within(mgus2, {
+#' mg <- within(mgus2, {
 #'   etime <- ifelse(pstat == 0, futime, ptime)
 #'   event <- ifelse(pstat == 0, 2 * death, 1)
 #'   event <- factor(event, 0:2, c('censor', 'pcm', 'death'))
 #' })
 #' 
-#' pdata <- finegray(Surv(etime, event) ~ age + sex, data = dd)
+#' pdata <- finegray(Surv(etime, event) ~ age + sex, data = mg)
 #' coxph(Surv(fgstart, fgstop, fgstatus) ~ age + sex,
 #'       weight = fgwt, data = pdata)
 #' 
-#' fg <- finegray2(Surv(etime, event) ~ age + sex, data = dd)
+#' fg <- finegray2(Surv(etime, event) ~ age + sex, data = mg)
 #' fg$pcm
 #' 
+#' ## use the call and data to evaluate the equivalent coxph model
 #' eval(fg$pcm$call, list(fgdata = fg$pcm$fgdata))
 #' 
 #' @export
@@ -406,4 +422,17 @@ finegray2 <- function(formula, data, cencode, ...) {
   })
   
   setNames(fg, crisks)
+}
+
+tidy_ <- function(x, conf.int = 0.95, ...) {
+  ## clean up crr or coxph objects
+  # tidy_(coxph(Surv(time, status) ~ rx, colon))
+  assert_class(x, c('crr', 'coxph'))
+  s <- summary(x, conf.int = conf.int, ...)
+  
+  setNames(
+    data.frame(s$conf.int[, -2L, drop = FALSE],
+               s$coef[,  -(1:4), drop = FALSE]),
+    c('HR', 'LCI', 'UCI', 'p')
+  )
 }
