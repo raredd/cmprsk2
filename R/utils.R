@@ -1,7 +1,14 @@
 ### utils
-# %inside%, %ni%, %||%, islist, assert_class, is.loaded, terms.inner, trimwsq
+# %||%, %inside%, %ni%, assert_class, islist, is.loaded, parse_formula, pvalr,
+# strata, terms.inner, sterms.inner, trimwsq
+# 
+# formula s3 methods:
+# is.crr2, is.crr2.default, is.crr2.formula, is.cuminc2, is.cuminc2.default,
+# is.cuminc2.formula
 ###
 
+
+`%||%` <- function(x, y) if (is.null(x) | !length(x)) y else x
 
 `%inside%` <- function(x, interval) {
   interval <- sort(interval)
@@ -9,8 +16,6 @@
 }
 
 `%ni%` <- function(x, table) !(match(x, table, nomatch = 0L) > 0L)
-
-`%||%` <- function(x, y) if (is.null(x)) y else x
 
 assert_class <- function(x, class, which = FALSE,
                          message = NULL, warn = FALSE) {
@@ -51,17 +56,132 @@ is.crr2.formula <- function(x) {
   grepl('Surv\\([^(]+\\([^(]+\\)\\s*(==|%in%)[^)]+\\)', x)
 }
 
+is.cuminc2 <- function(x) {
+  if (inherits(x, 'cuminc2'))
+    return(TRUE)
+  UseMethod('is.cuminc2')
+}
+
+is.cuminc2.default <- function(x) {
+  inherits(x, 'cuminc2')
+}
+
+is.cuminc2.formula <- function(x) {
+  x <- if (is.character(x) ||
+           length(rapply(as.list(x)[2L], function(y)
+             length(as.list(y)))) == 1L)
+    deparse(x) else deparse(x[[2L]])
+  
+  grepl('Surv\\([^(]+\\([^(]+\\)\\s*(?:(==|%in%)[^)]+)?\\)', x)
+}
+
+islist <- function(x)
+  inherits(x, 'list')
+
 is.loaded <- function(package) {
   any(grepl(sprintf('package:%s', package), search()))
 }
 
-islist <- function(x) inherits(x, 'list')
+parse_formula <- function(formula, data = NULL) {
+  if (!(is.crr2(formula) | is.cuminc2(formula)))
+    stop(
+      'Invalid formula - see ?crr2 or ?cmprsk2 for deatails'
+    )
+  
+  term <- terms.inner(formula)
+  form <- rapply(term, trimwsq, how = 'list')
+  
+  lhs  <- form[[1L]][1:2]
+  rhs  <- if (attr(term, 'dots'))
+    setdiff(names(data), lhs) else form[[1L]][-(1:2)]
+  if (identical(rhs, '1'))
+    rhs <- NULL
+  
+  strata <- strata(formula)
+  rhs    <- setdiff(rhs, strata) %||% NULL
+  
+  ftime   <- lhs[1L]
+  fstatus <- lhs[2L]
+  
+  cencode  <- form[[2L]][1L] %||% NULL
+  failcode <- if (is.na(failcode <- form[[2L]][2L]))
+    NULL else failcode
+  
+  if (!is.null(data)) {
+    dname <- deparse(substitute(data))
+    vars <- c(lhs, rhs, strata)
+    if (length(vars <- vars[vars %ni% names(data)]))
+      stop(
+        sprintf('%s not found in %s',
+                toString(shQuote(vars)), shQuote(dname))
+      )
+    
+    if (!is.numeric(data[, ftime]) | any(data[, ftime] < 0))
+      stop(
+        sprintf('%s should be numeric values > 0', shQuote(ftime))
+      )
+    
+    codes <- c(cencode, failcode)
+    if (length(codes <- codes[codes %ni% data[, fstatus]]))
+      stop(
+        sprintf('%s not found in %s[, %s]',
+                toString(shQuote(codes)), dname, shQuote(fstatus))
+      )
+  }
+  
+  list(
+    lhs = lhs,
+    rhs = rhs,
+    
+    ftime   = ftime,
+    fstatus = fstatus,
+    
+    cencode  = cencode,
+    failcode = failcode,
+    
+    strata = strata
+  )
+}
+
+## rawr::pvalr
+pvalr <- function(pvals, sig.limit = 0.001, digits = 3L,
+         html = FALSE, show.p = FALSE) {
+  stopifnot(sig.limit > 0, sig.limit < 1)
+  show.p <- show.p + 1L
+  html   <- html + 1L
+  
+  sapply(pvals, function(x, sig.limit) {
+    if (is.na(x) | !nzchar(x))
+      return(NA)
+    if (x >= 0.99)
+      return(paste0(c('','p ')[show.p], c('> ','&gt; ')[html], '0.99'))
+    if (x >= 0.9)
+      return(paste0(c('','p ')[show.p], c('> ','&gt; ')[html], '0.9'))
+    if (x < sig.limit) {
+      paste0(c('', 'p ')[show.p], c('< ', '&lt; ')[html], format(sig.limit))
+    } else {
+      nd <- c(digits, 2L, 1L)[findInterval(x, c(-Inf, .1, .5, Inf))]
+      paste0(c('','p = ')[show.p], roundr(x, nd))
+    }
+  }, sig.limit)
+}
+
+roundr <- function(x, digits = 1L) {
+  sprintf('%.*f', digits, x)
+}
+
+strata <- function(formula) {
+  formula <- deparse(formula)
+  strata  <- trimws(gsub('strata\\s*\\(([^)]+)|.', '\\1', formula))
+  if (nzchar(strata))
+    strata else NULL
+}
 
 terms.inner <- function(x, survival = FALSE) {
   ## survival:::terms.inner with modifications
   if (inherits(x, 'formula')) {
     if (length(x) == 3L) {
-      if (!is.crr2(x)) {
+      if (!(is.crr2(x) | is.cuminc2(x))) {
         cc <- list(NULL)
         terms2 <- sterms.inner(x[[2L]])
         terms3 <- sterms.inner(x[[3L]])
@@ -72,7 +192,9 @@ terms.inner <- function(x, survival = FALSE) {
         terms2 <- terms.inner(x[[2L]])
         terms3 <- sterms.inner(x[[3L]])
       }
-      structure(list(c(terms2, terms3), cc), dots = any(terms3 == '.'))
+      structure(
+        list(c(terms2, terms3), cc), dots = any(terms3 == '.')
+      )
     } else terms.inner(x[[2L]])
   } else if (class(x) == 'call' &&
              (x[[1L]] != as.name('$') &&
