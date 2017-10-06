@@ -1,3 +1,8 @@
+cmprsk2 0.0.0.9001
+----
+  * add cuminc2 (plot, print, summary methods)
+  * improvements to crr2, formula parsing
+
 cmprsk2 0.0.0.9000
 ----
   * initial commit
