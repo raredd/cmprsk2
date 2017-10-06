@@ -23,19 +23,20 @@ Fit multiple \code{\link[survival]{finegray}} models.
 }
 \examples{
 ## example from survival::finegray
-dd <- within(mgus2, {
+mg <- within(mgus2, {
   etime <- ifelse(pstat == 0, futime, ptime)
   event <- ifelse(pstat == 0, 2 * death, 1)
   event <- factor(event, 0:2, c('censor', 'pcm', 'death'))
 })
 
-pdata <- finegray(Surv(etime, event) ~ age + sex, data = dd)
+pdata <- finegray(Surv(etime, event) ~ age + sex, data = mg)
 coxph(Surv(fgstart, fgstop, fgstatus) ~ age + sex,
       weight = fgwt, data = pdata)
 
-fg <- finegray2(Surv(etime, event) ~ age + sex, data = dd)
+fg <- finegray2(Surv(etime, event) ~ age + sex, data = mg)
 fg$pcm
 
+## use the call and data to evaluate the equivalent coxph model
 eval(fg$pcm$call, list(fgdata = fg$pcm$fgdata))
 
 }

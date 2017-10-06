@@ -5,7 +5,7 @@
 \alias{print.timepoints2}
 \title{\code{timepoints} formatter}
 \usage{
-timepoints2(w, times, digits = 3L, ci = TRUE, html = TRUE)
+timepoints2(w, times, digits = 3L, sd = FALSE, ci = FALSE, html = FALSE)
 
 \method{print}{timepoints2}(x, ..., html = attr(x, "html"))
 }
@@ -13,6 +13,9 @@ timepoints2(w, times, digits = 3L, ci = TRUE, html = TRUE)
 \item{w, times}{arguments passed to \code{\link{timepoints}}}
 
 \item{digits}{number of digits past the decimal point to keep}
+
+\item{sd}{logical; if \code{FALSE}, the standard deviation will not be
+shown with the estimate}
 
 \item{ci}{logical; not implemented}
 
@@ -29,20 +32,27 @@ Format output from \code{\link[cmprsk]{timepoints}} into a single matrix
 with estimate +/- standard deviation.
 }
 \examples{
+ci <- cuminc2(Surv(futime, event(censored)) ~ sex, transplant)
+timepoints2(ci, sd = TRUE)
+timepoints2(ci, html = TRUE)
+
+print(
+  timepoints2(ci, sd = TRUE, html = TRUE),
+  rgroup = c('Death', 'Ltx', 'Withdraw'), n.rgroup = c(2, 2, 2),
+  caption = 'Timepoints<sup>&dagger;</sup>',
+  tfoot = '<sup>&dagger;</sup>Estimate &pm; SD'
+)
+
+
 ## example from cmprsk::cuminc
 set.seed(2)
 ss <- rexp(100)
 gg <- factor(sample(1:3,100,replace=TRUE),1:3,c('a','b','c'))
 cc <- sample(0:2,100,replace=TRUE)
 strt <- sample(1:2,100,replace=TRUE)
-print(xx <- cuminc(ss,cc,gg,strt))
+xx <- cuminc(ss,cc,gg,strt)
 
 timepoints(xx, times = 0:4)
-timepoints2(xx, html = FALSE)
-
-print(timepoints2(xx),
-      rgroup = c('One', 'Two'), n.rgroup = c(3,3),
-      caption = 'Timepoints<sup>&dagger;</sup>',
-      tfoot = '<sup>&dagger;</sup>Estimate &pm; SD')
+timepoints2(xx, times = 0:4, digits = 5)
 
 }

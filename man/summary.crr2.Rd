@@ -4,15 +4,17 @@
 \alias{summary.crr2}
 \title{\code{crr2} summary method}
 \usage{
-\method{summary}{crr2}(object, conf.int = 0.95, ..., html = TRUE,
-  combine_ci = FALSE, digits = 2L, format_p = TRUE)
+\method{summary}{crr2}(object, conf.int = 0.95, ..., html = FALSE,
+  combine_ci = FALSE, digits = 2L, format_p = html)
 }
 \arguments{
 \item{object}{an object of class \code{\link{crr2}}}
 
 \item{conf.int}{level of confidence}
 
-\item{...}{additional arguments affecting the summary produced}
+\item{...}{additional arguments affecting the summary produced (passed
+to \code{\link[cmprsk]{summary.crr}} or
+\code{\link[survival]{summary.coxph}} depending on the object)}
 
 \item{html}{logical; if \code{TRUE}, an \code{\link{htmlTable}} will be
 returned; otherwise, a matrix}
@@ -31,10 +33,15 @@ otherwise, p-values will only be rounded}
 }
 \examples{
 crrs <- crr2(Surv(futime, event(censored) == death) ~ age + sex + abo,
-             transplant)
-summary(crrs, html = FALSE)
+             data = transplant)
+summary(crrs)
+
+summary(crrs, conf.int = 0.9, digits = 3L,
+        combine_ci = TRUE, format_p = TRUE)
+
+
 library('htmlTable')
-summary(crrs, html = TRUE)
+summary(crrs, html = TRUE, combine_ci = TRUE)
 
 }
 \seealso{

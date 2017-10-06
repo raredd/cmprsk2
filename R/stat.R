@@ -301,8 +301,10 @@ crrFits <- function(..., p) {
   title <- 'Model selection table\n'
   # model <- sprintf('Model %s: %s', rownames(res), model)
   
-  structure(res, heading = c(title, unlist(model), ''),
-            class = c('anova', 'data.frame'))
+  structure(
+    res, heading = c(title, unlist(model), ''),
+    class = c('anova', 'data.frame')
+  )
 }
 
 #' Wald test for \code{crr} model coefficients
@@ -400,7 +402,9 @@ wald.test <- function (Sigma, b, Terms = NULL, L = NULL, H0 = NULL,
                           P = 1 - pf(fstat, df1, df2)))
   }
   
-  structure(list(Sigma = Sigma, b = b, Terms = Terms, H0 = H0, 
-                 L = L, result = res, verbose = verbose, df = df),
-            class = 'wald.test')
+  structure(
+    list(Sigma = Sigma, b = b, Terms = Terms, H0 = H0,
+         L = L, result = res, verbose = verbose, df = df),
+    class = 'wald.test'
+  )
 }
