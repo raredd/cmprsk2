@@ -8,21 +8,25 @@
 ###
 
 
-`%||%` <- function(x, y) if (is.null(x) | !length(x)) y else x
+`%||%` <- function(x, y) {
+  if (is.null(x) | !length(x)) y else x
+}
 
 `%inside%` <- function(x, interval) {
   interval <- sort(interval)
   x >= interval[1L] & x <= interval[2L]
 }
 
-`%ni%` <- function(x, table) !(match(x, table, nomatch = 0L) > 0L)
+`%ni%` <- function(x, table) {
+  !(match(x, table, nomatch = 0L) > 0L)
+}
 
 assert_class <- function(x, class, which = FALSE,
                          message = NULL, warn = FALSE) {
   name <- substitute(x)
   FUN <- if (warn)
-    function(...) warning(..., call. = FALSE)
-  else function(...) stop(..., call. = FALSE)
+    warning else stop
+  formals(FUN)$call. <- FALSE
   
   if (is.null(message))
     message <- paste(shQuote(name), 'is not of class',
@@ -30,6 +34,7 @@ assert_class <- function(x, class, which = FALSE,
   
   if (!all(inherits(x, class, which)))
     FUN(message)
+  
   invisible(TRUE)
 }
 
@@ -72,20 +77,25 @@ is.cuminc2.formula <- function(x) {
              length(as.list(y)))) == 1L)
     deparse(x) else deparse(x[[2L]])
   
+  ## status(0) == 1 equality is optional
   grepl('Surv\\([^(]+\\([^(]+\\)\\s*(?:(==|%in%)[^)]+)?\\)', x)
 }
 
-islist <- function(x)
+islist <- function(x) {
+  ## is.list(data.frame()) returns TRUE
   inherits(x, 'list')
+}
 
 is.loaded <- function(package) {
+  package <- if (is.character(substitute(package)))
+    package else deparse(substitute(package))
   any(grepl(sprintf('package:%s', package), search()))
 }
 
 parse_formula <- function(formula, data = NULL) {
   if (!(is.crr2(formula) | is.cuminc2(formula)))
     stop(
-      'Invalid formula - see ?crr2 or ?cmprsk2 for deatails'
+      'Invalid formula - see ?crr2 or ?cuminc2 for deatails'
     )
   
   term <- terms.inner(formula)
@@ -177,6 +187,51 @@ strata <- function(formula) {
     strata else NULL
 }
 
+## rawr::tcol
+tcol <- function(colors, trans = NULL, alpha = NULL) {
+  trans <- trans %||% 255L
+  stopifnot(
+    trans %inside% c(0L, 255L) | is.na(trans)
+  )
+  
+  ## convert alpha to trans
+  if (!is.null(alpha)) {
+    stopifnot(
+      alpha %inside% c(0, 1) | is.na(alpha)
+    )
+    trans <- as.integer(rescaler(alpha, to = c(0, 255), from = c(0, 1)))
+  }
+  
+  ## get color and trans to conformable lengths
+  if (length(colors) != length(trans) & 
+      !any(c(length(colors), length(trans)) == 1L))
+    stop('Vector lengths are not conformable')
+  if (length(colors) == 1L & length(trans) > 1L)
+    colors <- rep_len(colors, length(trans))
+  if (length(trans) == 1L & length(colors) > 1L)
+    trans <- rep_len(trans, length(colors))
+  
+  ## if color == 0, returns NA
+  if (length(nocol <- which(colors == 0))) {
+    colors[nocol] <- 1
+    trans[nocol] <- NA
+  }
+  
+  res <- paste0('#', apply(apply(rbind(col2rgb(colors)), 2L, function(x)
+    format(as.hexmode(x), width = 2L)), 2L, paste, collapse = ''))
+  res <- Map(paste0, res, tryCatch(
+    as.character(as.hexmode(trans)),
+    error = function(e) '', warning = function(w) ''
+  ))
+  res <- unname(unlist(res))
+  
+  ## return NAs and/or set color to transparent
+  res[is.na(colors) | is.na(trans)] <- NA
+  res[colors %in% 'transparent'] <- 'transparent'
+  
+  res
+}
+
 terms.inner <- function(x, survival = FALSE) {
   ## survival:::terms.inner with modifications
   if (inherits(x, 'formula')) {
@@ -229,4 +284,6 @@ sterms.inner <- function(x) {
   } else (deparse(x))
 }
 
-trimwsq <- function(x) gsub('^[\'\" \t\r\n]*|[\'\" \t\r\n]*$', '', x)
+trimwsq <- function(x) {
+  gsub('^[\'\" \t\r\n]*|[\'\" \t\r\n]*$', '', x)
+}

@@ -28,7 +28,6 @@ equality across groups.
 \examples{
 tp <- within(transplant, {
   event_ind <- as.integer(event) - 1L
-  year <- NULL
 })
 
 ## no group, no strata
