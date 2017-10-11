@@ -5,27 +5,29 @@
 \alias{plot.cuminc2}
 \title{\code{cuminc2} plotting method}
 \usage{
-ciplot(x, main = NULL, xlab = "Time", ylab = "Probability",
+ciplot(x, lty.ci = par("lty"), lwd.ci = par("lwd"),
+  col.ci = seq_along(xx), events = TRUE, wh.events = c("events", "est",
+  "est.sd", "est.ci"), col.events = col.ci, events.lab = NULL,
+  events.digits = 3L, events.lines = TRUE, events.col = FALSE,
+  main = NULL, xlab = "Time", ylab = "Probability",
   groups.lab = names(xx), xlim = NULL, ylim = NULL,
-  col.ci = seq_along(xx), lty.ci = par("lty"), lwd.ci = par("lwd"),
-  cex.axis = par("cex.axis"), gy_test = TRUE, events = TRUE,
-  col.events = col.ci, wh.events = c("events", "est", "est.sd", "est.ci"),
-  events.digits = 3L, events.lab = NULL, events.lines = TRUE,
-  events.col = FALSE, xaxis.at = pretty(xlim), yaxis.at = pretty(ylim),
-  xaxis.lab = xaxis.at, yaxis.lab = yaxis.at, events.at = xaxis.at,
+  cex.axis = par("cex.axis"), gy_test = TRUE, split = FALSE,
+  xaxis.at = pretty(xlim), yaxis.at = pretty(ylim), xaxis.lab = xaxis.at,
+  yaxis.lab = yaxis.at, events.at = xaxis.at,
   groups.order = seq_along(xx), extra.margin = 5L, panel.first = NULL,
   panel.last = NULL, add = FALSE, mar = NULL, ...)
 
-\method{plot}{cuminc2}(x, main = NULL, xlab = "Time",
-  ylab = "Probability", groups.lab = names(xx), xlim = NULL,
-  ylim = NULL, col.ci = seq_along(xx), lty.ci = par("lty"),
-  lwd.ci = par("lwd"), cex.axis = par("cex.axis"), gy_test = TRUE,
-  events = TRUE, col.events = col.ci, wh.events = c("events", "est",
-  "est.sd", "est.ci"), events.digits = 3L, events.lab = NULL,
-  events.lines = TRUE, events.col = FALSE, xaxis.at = pretty(xlim),
-  yaxis.at = pretty(ylim), xaxis.lab = xaxis.at, yaxis.lab = yaxis.at,
-  events.at = xaxis.at, groups.order = seq_along(xx), extra.margin = 5L,
-  panel.first = NULL, panel.last = NULL, add = FALSE, mar = NULL, ...)
+\method{plot}{cuminc2}(x, lty.ci = par("lty"), lwd.ci = par("lwd"),
+  col.ci = seq_along(xx), events = TRUE, wh.events = c("events", "est",
+  "est.sd", "est.ci"), col.events = col.ci, events.lab = NULL,
+  events.digits = 3L, events.lines = TRUE, events.col = FALSE,
+  main = NULL, xlab = "Time", ylab = "Probability",
+  groups.lab = names(xx), xlim = NULL, ylim = NULL,
+  cex.axis = par("cex.axis"), gy_test = TRUE, split = FALSE,
+  xaxis.at = pretty(xlim), yaxis.at = pretty(ylim), xaxis.lab = xaxis.at,
+  yaxis.lab = yaxis.at, events.at = xaxis.at,
+  groups.order = seq_along(xx), extra.margin = 5L, panel.first = NULL,
+  panel.last = NULL, add = FALSE, mar = NULL, ...)
 }
 \arguments{
 \item{x}{an object of class \code{\link{cuminc2}}}
@@ -47,9 +49,10 @@ tp <- within(transplant, {
   age_cat <- cut(age, c(0, 40, 60, Inf), c('<40', '40-60', '60+'))
 })
 
-ci1 <- cuminc2(Surv(futime, event(censored) == ltx) ~ age_cat, tp)
+ci1 <- cuminc2(Surv(futime, event(censored)) ~ age_cat, tp)
 plot(ci1)
 plot(ci1$cuminc)
+plot(ci1, split = 'event')
 
 ci1 <- cuminc2(Surv(futime, event(censored) == death) ~ age50, tp)
 plot(ci1, lty.ci = c(1,1,2,2,3,3), col.ci = 1:2)

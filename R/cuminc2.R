@@ -1,6 +1,6 @@
 ### formula method for cuminc
 # cuminc2, ciplot, plot.cuminc2, ciplot_by, print.cuminc2, summary.cuminc2,
-# cuminc_pairs
+# split_cuminc, cuminc_pairs
 # 
 # unexported:
 # get_events, gy_pval, gy_text
@@ -136,9 +136,10 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
 #'   age_cat <- cut(age, c(0, 40, 60, Inf), c('<40', '40-60', '60+'))
 #' })
 #' 
-#' ci1 <- cuminc2(Surv(futime, event(censored) == ltx) ~ age_cat, tp)
+#' ci1 <- cuminc2(Surv(futime, event(censored)) ~ age_cat, tp)
 #' plot(ci1)
 #' plot(ci1$cuminc)
+#' plot(ci1, split = 'event')
 #' 
 #' ci1 <- cuminc2(Surv(futime, event(censored) == death) ~ age50, tp)
 #' plot(ci1, lty.ci = c(1,1,2,2,3,3), col.ci = 1:2)
@@ -149,19 +150,23 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
 #' @export
 
 ciplot <- function(x,
+                   lty.ci = par('lty'), lwd.ci = par('lwd'),
+                   col.ci = seq_along(xx),
+                   
+                   events = TRUE,
+                   wh.events = c('events', 'est', 'est.sd', 'est.ci'),
+                   col.events = col.ci,
+                   events.lab = NULL,
+                   events.digits = 3L,
+                   events.lines = TRUE, events.col = FALSE,
+                   
                    main = NULL,
                    xlab = 'Time', ylab = 'Probability',
                    groups.lab = names(xx),
                    xlim = NULL, ylim = NULL,
-                   col.ci = seq_along(xx),
-                   lty.ci = par('lty'), lwd.ci = par('lwd'),
                    cex.axis = par('cex.axis'),
                    gy_test = TRUE,
-                   events = TRUE, col.events = col.ci,
-                   wh.events = c('events', 'est', 'est.sd', 'est.ci'),
-                   events.digits = 3L,
-                   events.lab = NULL,
-                   events.lines = TRUE, events.col = FALSE,
+                   split = FALSE,
                    xaxis.at = pretty(xlim),
                    yaxis.at = pretty(ylim),
                    xaxis.lab = xaxis.at, yaxis.lab = yaxis.at,
@@ -176,6 +181,22 @@ ciplot <- function(x,
     events <- FALSE
     list(cuminc = x, cuminc2 = NULL)
   } else assert_class(x, c('cuminc2', 'cuminc'))
+  
+  split <- tryCatch(match.arg(split, c('event', 'group')),
+                    error = function(e) FALSE)
+  
+  if (!identical(split, FALSE)) {
+    args <- as.list(match.call())
+    args$split <- FALSE
+    
+    sp <- split_cuminc(x, split)
+    for (ii in sp) {
+      args$x <- ii
+      do.call('ciplot', args[-1L])
+    }
+    
+    return(invisible(NULL))
+  }
   
   ci <- x[['cuminc']]
   xx <- ci[names(ci) != 'Tests']
@@ -340,7 +361,7 @@ ciplot <- function(x,
   
   ## add gray text in upper right corner
   if (gy_test) {
-    txt <- tryCatch(gy_text(ci), error = function(e) 'n/a')
+    txt <- tryCatch(gy_text(ci), error = function(e) NULL)
     if (is.null(txt))
       invisible(NULL)
     else legend('topleft', legend = paste0(names(txt), ': ', txt),
@@ -516,6 +537,7 @@ print.cuminc2 <- function(x, ...) {
 #'
 #' @param object an object of class \code{\link{cuminc2}}
 #' @param times a vector of times
+#' @param digits integer indicating the number of decimal places to be used
 #' @param ... ignored
 #' 
 #' @seealso
@@ -531,54 +553,59 @@ print.cuminc2 <- function(x, ...) {
 #' cumulative incidence model(s); see \code{\link[cmprsk]{timepoints}}}
 #' \item{\code{events}}{a matrix with the number of cumulative events up
 #' to and including each value in \code{times}}
-#' \item{\code{total_events}}{a matrix giving the total number of events}
+#' \item{\code{total_events}}{a vector giving the total number of events of
+#' each type (excluding censored observations)}
+#' \item{\code{total_groups}}{a vector giving the number by group (including
+#' censored observations)}
 #' 
 #' @examples
-#' ci <- cuminc2(Surv(futime, event(censored)) ~ sex + strata(abo),
-#'               data = transplant)
+#' ci <- cuminc2(Surv(futime, event(censored)) ~ sex, transplant)
+#' ci <- cuminc2(Surv(futime, event(censored)) ~ 1, transplant)
 #' summary(ci)
-#' summary(ci, times = c(0, 250, 500))
+#' summary(ci, times = 0:10 * 100)
 #'
 #' @export
 
-summary.cuminc2 <- function(object, times = NULL, ...) {
+summary.cuminc2 <- function(object, times = NULL, digits = 5L, ...) {
   assert_class(object, 'cuminc2')
   
   x <- object$cuminc2
   x <- droplevels(x[x$status %ni% x$cencode, ])
   
-  st <- levels(as.factor(x$group))
+  gr <- levels(as.factor(x$group))
   
   sp <- split(x, interaction(x$status, x$strata, drop = TRUE))
   sp <- split(x, interaction(x$status, drop = TRUE))
   
   sp <- lapply(sp, function(x) {
     x <- x[order(x$time), ]
-    x[, st] <- lapply(st, function(y) {
+    x[, gr] <- lapply(gr, function(y) {
       cumsum(x$group %in% y)
     })
     x
   })
   
   if (is.null(times))
-    times <- pretty(x$time)
+    times <- head(pretty(c(0, x$time)), -1L)
   tp <- object[['cuminc']]
   tp <- timepoints(tp, times)
+  tp <- lapply(tp, round, digits = digits)
+  
   
   times <- colnames(tp$est)
   sp <- lapply(sp, function(x) {
-    get_events(x[, st, drop = FALSE], x$time, times)
+    get_events(x[, gr, drop = FALSE], x$time, times)
   })
   
   res <- do.call('rbind', sp)
-  rownames(res) <- paste(st, rep(names(sp), each = length(st)))
+  rownames(res) <- paste(gr, rep(names(sp), each = length(gr)))
   colnames(res) <- times
-  total_events <- matrix(table(x$group, x$status),
-                         dimnames = list(rownames(res), 'Events'))
+  total_events <- setNames(c(table(x$group, x$status)), rownames(res))
   ## "atrisk"
   # res <- c(total_events) - res
   
-  c(tp, list(events = res, total_events = total_events))
+  c(tp, list(events = res, total_events = total_events, 
+             total_groups = c(table(object$cuminc2$group))))
 }
 
 get_events <- function(data, time, timepoints) {
@@ -623,6 +650,55 @@ gy_text <- function(x, ...) {
   
   # bquote(paste(chi^2, ' = ', .(txt)))
   txt
+}
+
+split_cuminc <- function(x, wh = c('event', 'group')) {
+  ci <- x[['cuminc']]
+  xx <- ci[names(ci) != 'Tests']
+  
+  gy <- !is.null(ci$Tests)
+  c2 <- inherits(x, 'cuminc2')
+  
+  mat <- do.call('rbind', strsplit(names(xx), ' (?=\\S)+', perl = TRUE))
+  gr <- unique(mat[, 1L])
+  ev <- unique(mat[, 2L])
+  
+  wh <- match.arg(wh)
+  
+  switch(wh,
+         event = {
+           xx_ev <- lapply(ev, function(ii) {
+             tmp <- list(cuminc = xx[grep(ii, names(xx), fixed = TRUE)])
+             
+             if (gy)
+               tmp$cuminc$Tests <- ci$Tests[grep(ii, rownames(ci$Tests)), , drop = FALSE]
+             
+             if (c2) {
+               dat <- x$cuminc2[x$cuminc2[, 'status'] %in% ii, ]
+               tmp <- c(tmp, list(cuminc2 = droplevels(dat)))
+             }
+             
+             structure(tmp, class = c('cuminc', 'cuminc2')[c2 + 1L])
+           })
+           names(xx_ev) <- ev
+           xx_ev
+         },
+         
+         group = {
+           xx_gr <- lapply(gr, function(ii) {
+             tmp <- list(cuminc = xx[grep(ii, names(xx), fixed = TRUE)])
+             
+             if (c2) {
+               dat <- x$cuminc2[x$cuminc2[, 'group'] %in% ii, ]
+               tmp <- c(tmp, list(cuminc2 = droplevels(dat)))
+             }
+             
+             structure(tmp, class = c('cuminc', 'cuminc2')[c2 + 1L])
+           })
+           names(xx_gr) <- gr
+           xx_gr
+         }
+  )
 }
 
 #' Pairwise \code{cuminc} comparisons
@@ -727,5 +803,5 @@ cuminc_pairs <- function(object, data = NULL, rho = 0, cencode = NULL,
   })
   names(chisq) <- names(p.value) <- crs
   
-  list(n = nn, chi.sq  = chisq, p.value = p.value)
+  list(n = nn, chi.sq = chisq, p.value = p.value)
 }

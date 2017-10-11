@@ -38,6 +38,10 @@ assert_class <- function(x, class, which = FALSE,
   invisible(TRUE)
 }
 
+catlist <- function(x) {
+  paste0(paste(names(x), x, sep = ' = ', collapse = ', '))
+}
+
 is.crr2 <- function(x) {
   if (inherits(x, 'crr2'))
     return(TRUE)

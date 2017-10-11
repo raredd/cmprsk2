@@ -4,12 +4,14 @@
 \alias{summary.cuminc2}
 \title{\code{cuminc2} summary method}
 \usage{
-\method{summary}{cuminc2}(object, times = NULL, ...)
+\method{summary}{cuminc2}(object, times = NULL, digits = 5L, ...)
 }
 \arguments{
 \item{object}{an object of class \code{\link{cuminc2}}}
 
 \item{times}{a vector of times}
+
+\item{digits}{integer indicating the number of decimal places to be used}
 
 \item{...}{ignored}
 }
@@ -22,16 +24,19 @@ cumulative incidence model(s); see \code{\link[cmprsk]{timepoints}}}
 cumulative incidence model(s); see \code{\link[cmprsk]{timepoints}}}
 \item{\code{events}}{a matrix with the number of cumulative events up
 to and including each value in \code{times}}
-\item{\code{total_events}}{a matrix giving the total number of events}
+\item{\code{total_events}}{a vector giving the total number of events of
+each type (excluding censored observations)}
+\item{\code{total_groups}}{a vector giving the number by group (including
+censored observations)}
 }
 \description{
 \code{cuminc2} summary method
 }
 \examples{
-ci <- cuminc2(Surv(futime, event(censored)) ~ sex + strata(abo),
-              data = transplant)
+ci <- cuminc2(Surv(futime, event(censored)) ~ sex, transplant)
+ci <- cuminc2(Surv(futime, event(censored)) ~ 1, transplant)
 summary(ci)
-summary(ci, times = c(0, 250, 500))
+summary(ci, times = 0:10 * 100)
 
 }
 \seealso{
