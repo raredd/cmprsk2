@@ -28,14 +28,17 @@ to and including each value in \code{times}}
 each type (excluding censored observations)}
 \item{\code{total_groups}}{a vector giving the number by group (including
 censored observations)}
+\item{\code{total_atrisk}}{a vector giving the number remaining in the
+risk set regardless of event or censoring}
 }
 \description{
 \code{cuminc2} summary method
 }
 \examples{
 ci <- cuminc2(Surv(futime, event(censored)) ~ sex, transplant)
-ci <- cuminc2(Surv(futime, event(censored)) ~ 1, transplant)
 summary(ci)
+
+ci <- cuminc2(Surv(futime, event(censored)) ~ 1, transplant)
 summary(ci, times = 0:10 * 100)
 
 }

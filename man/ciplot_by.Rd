@@ -6,7 +6,7 @@
 \usage{
 ciplot_by(rhs = "1", event, data, by = NULL, single = TRUE,
   cencode = NULL, gy_test = TRUE, main = NULL, ylab = NULL,
-  sub = NULL, strata_lab = NULL, fig_lab = NULL, col.ci = NULL,
+  sub = NULL, groups_lab = NULL, fig_lab = NULL, col.ci = NULL,
   map.col = FALSE, time = NULL, add = FALSE, plot = TRUE, ...)
 }
 \arguments{
@@ -21,6 +21,50 @@ ciplot_by(rhs = "1", event, data, by = NULL, single = TRUE,
 \item{single}{logical; if TRUE, each level of by will be drawn in a separate window}
 
 \item{cencode}{unique value of \code{event} denoting censoring}
+
+\item{gy_test}{one of \code{FALSE} (no test performed), a numeric value
+(passed to \code{\link[cmprsk]{cuminc}} as the \code{rho} value), or
+\code{TRUE} (default, \code{rho = 0})}
+
+\item{main}{title(s) of plot(s)}
+
+\item{ylab}{y-axis label}
+
+\item{sub}{sub-title displayed in upper left corner; should be a character
+vector with length equal to the number of panels (i.e., the number of
+unique values of \code{by} or length one if \code{by} was not given)}
+
+\item{groups_lab}{events table group labels; should be a character vector
+with length equal to the number of groups}
+
+\item{fig_lab}{figure panel labels; should be a character vector with
+length equal to the number of panels (i.e., the number of unique values of
+\code{by} or length one if \code{by} was not given)}
+
+\item{col.ci}{color for individual curves or for all curves in a plot if
+\code{by} is given and \code{map.col = TRUE}; if \code{col.ci} is a named
+vector which matches the group labels, then colors are mapped to the
+corresponding groups; see \code{\link{ciplot}}}
+
+\item{map.col}{logical; if \code{TRUE}, \code{col.ci} will be the color
+of all curves in each plot (only used when \code{by} is non-missing)}
+
+\item{time}{character string of the time variable (optional)}
+
+\item{add}{logical; if \code{FALSE} (default), resets graphical parameters
+to settings before \code{ciplot_by} was called; set to \code{TRUE} for
+adding to existing plots}
+
+\item{plot}{logical; if \code{FALSE}, no plot is created but a list with
+\code{\link{cuminc2}} object(s) is returned}
+
+\item{...}{additional arguments passed to \code{\link{ciplot}} or graphical
+parameters subsequently passed to \code{\link{par}}}
+}
+\value{
+Invisibly returns a list of \code{\link{cuminc2}} object(s) used to
+generate plot(s). If \code{by} was used, there will be a list element for
+each unique value.
 }
 \description{
 This function helps create stratified \code{\link{ciplot}}s quickly with
@@ -36,4 +80,13 @@ ciplot_by('sex', time = 'futime', event = 'event',
 ciplot_by('sex', time = 'futime', event = 'event',
           data = transplant, by = 'abo', single = FALSE)
 
+
+par(mfrow = c(1, 2))
+ciplot_by('sex', time = 'futime', event = 'event',
+          data = transplant, by = 'sex', xlim = c(0, 1500),
+          single = FALSE, events.total = 2100)
+
+}
+\seealso{
+\code{\link{ciplot}}; \code{\link{cuminc2}}; \code{\link[cmprsk]{cuminc}}
 }

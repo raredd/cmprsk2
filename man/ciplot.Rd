@@ -5,36 +5,99 @@
 \alias{plot.cuminc2}
 \title{\code{cuminc2} plotting method}
 \usage{
-ciplot(x, lty.ci = par("lty"), lwd.ci = par("lwd"),
-  col.ci = seq_along(xx), events = TRUE, wh.events = c("events", "est",
-  "est.sd", "est.ci"), col.events = col.ci, events.lab = NULL,
-  events.digits = 3L, events.lines = TRUE, events.col = FALSE,
-  main = NULL, xlab = "Time", ylab = "Probability",
+ciplot(x, col.ci = seq_along(xx), lty.ci = par("lty"),
+  lwd.ci = par("lwd"), events = TRUE, atrisk = TRUE,
+  events.total = TRUE, wh.events = c("events", "est", "est.sd", "est.ci"),
+  events.lab = NULL, events.digits = 3L, events.lines = TRUE,
+  events.col = FALSE, main = NULL, xlab = "Time", ylab = "Probability",
   groups.lab = names(xx), xlim = NULL, ylim = NULL,
   cex.axis = par("cex.axis"), gy_test = TRUE, split = FALSE,
   xaxis.at = pretty(xlim), yaxis.at = pretty(ylim), xaxis.lab = xaxis.at,
   yaxis.lab = yaxis.at, events.at = xaxis.at,
-  groups.order = seq_along(xx), extra.margin = 5L, panel.first = NULL,
-  panel.last = NULL, add = FALSE, mar = NULL, ...)
+  groups.order = seq_along(xx), extra.margin = 5L, mar = NULL,
+  add = FALSE, panel.first = NULL, panel.last = NULL, ...)
 
-\method{plot}{cuminc2}(x, lty.ci = par("lty"), lwd.ci = par("lwd"),
-  col.ci = seq_along(xx), events = TRUE, wh.events = c("events", "est",
-  "est.sd", "est.ci"), col.events = col.ci, events.lab = NULL,
-  events.digits = 3L, events.lines = TRUE, events.col = FALSE,
-  main = NULL, xlab = "Time", ylab = "Probability",
+\method{plot}{cuminc2}(x, col.ci = seq_along(xx), lty.ci = par("lty"),
+  lwd.ci = par("lwd"), events = TRUE, atrisk = TRUE,
+  events.total = TRUE, wh.events = c("events", "est", "est.sd", "est.ci"),
+  events.lab = NULL, events.digits = 3L, events.lines = TRUE,
+  events.col = FALSE, main = NULL, xlab = "Time", ylab = "Probability",
   groups.lab = names(xx), xlim = NULL, ylim = NULL,
   cex.axis = par("cex.axis"), gy_test = TRUE, split = FALSE,
   xaxis.at = pretty(xlim), yaxis.at = pretty(ylim), xaxis.lab = xaxis.at,
   yaxis.lab = yaxis.at, events.at = xaxis.at,
-  groups.order = seq_along(xx), extra.margin = 5L, panel.first = NULL,
-  panel.last = NULL, add = FALSE, mar = NULL, ...)
+  groups.order = seq_along(xx), extra.margin = 5L, mar = NULL,
+  add = FALSE, panel.first = NULL, panel.last = NULL, ...)
 }
 \arguments{
 \item{x}{an object of class \code{\link{cuminc2}}}
 
+\item{col.ci, lty.ci, lwd.ci}{line color, type, and width for each curve}
+
+\item{events}{logical; if \code{TRUE}, a cumulative events table is drawn}
+
+\item{atrisk}{logical; if \code{TRUE}, the number at risk is added to the
+events table}
+
+\item{events.total}{logical or numeric; if \code{TRUE}, cumulative events
+for each group is added to events table at a calculated position; for more
+control, use a specific x-coordinate}
+
+\item{wh.events}{a character string giving the type of \code{events} table
+to show; one of \code{"events"} (cumulative number of events), \code{"est"}
+(estimates, see \code{\link[cmprsk]{timepoints}}), \code{"est.sd"} (estimate
++/- standard deviation), or \code{"est.ci"} (estimate with confidence
+inverval)}
+
+\item{events.lab}{heading for events table}
+
+\item{events.digits}{when estimates are shown in events table (see
+\code{wh.events}), number of digits past the decimal to show}
+
+\item{events.lines}{logical; draw lines next to groups in events table}
+
+\item{events.col}{logical or a vector with colors for events table text;
+if \code{TRUE}, \code{col.ci} will be used}
+
 \item{main}{title of plot}
 
 \item{xlab, ylab}{x- and y-axis labels}
+
+\item{groups.lab}{labels for each line in \code{events} table}
+
+\item{xlim, ylim}{x- and y-axis limits}
+
+\item{cex.axis}{text size for axes labels, \code{gy_test}, abd events table}
+
+\item{gy_test}{logical; if \code{TRUE} the tests of group equality will
+be shown}
+
+\item{split}{optionally split plot by unique competing risks or group;
+one of \code{FALSE} (default, no splitting), \code{"group"}, or
+\code{"event"}}
+
+\item{xaxis.at, yaxis.at}{positions for x- and y-axis labels and ticks}
+
+\item{xaxis.lab, yaxis.lab}{x- and y-axis tick labels}
+
+\item{events.at}{x-coordinates to show events table (default is
+\code{xaxis.at})}
+
+\item{groups.order}{order of groups in events table}
+
+\item{extra.margin}{increase left margin when groups labels in events
+table are long (note that this will be overridden by \code{mar})}
+
+\item{mar}{margins; see \code{mar} section in \code{\link{par}}}
+
+\item{add}{logical; if \code{TRUE}, \code{par}s are not reset; allows for
+multiple panels, e.g., when using \code{par(mfrow = c(1, 2))}}
+
+\item{panel.first}{an expression to be evaluated after the plot axes are
+set up but before any plotting takes place}
+
+\item{panel.last}{an expression to be evaluated after plotting but before
+returning from the function}
 
 \item{...}{additional parameters (\code{font}, \code{mfrow}, \code{bty},
 \code{tcl}, \code{cex.lab}, \code{xaxs}, etc) passed to \code{\link{par}}}
@@ -45,6 +108,7 @@ table, Gray's test results, and other features.
 }
 \examples{
 tp <- within(transplant, {
+  futime[futime == 0] <- 1
   age50 <- factor(+(age > 50))
   age_cat <- cut(age, c(0, 40, 60, Inf), c('<40', '40-60', '60+'))
 })
@@ -58,7 +122,7 @@ ci1 <- cuminc2(Surv(futime, event(censored) == death) ~ age50, tp)
 plot(ci1, lty.ci = c(1,1,2,2,3,3), col.ci = 1:2)
 
 ci2 <- cuminc2(Surv(futime, event(censored) == death) ~ 1, tp)
-plot(ci2, wh.events = 'est')
+plot(ci2, wh.events = 'est', events.digits = 2, groups.order = c(2,1,3))
 
 }
 \seealso{
