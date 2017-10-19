@@ -130,7 +130,8 @@ parse_formula <- function(formula, data = NULL) {
                 toString(shQuote(vars)), shQuote(dname))
       )
     
-    if (!is.numeric(data[, ftime]) | any(data[, ftime] < 0))
+    if (!is.numeric(na.omit(data[, ftime])) |
+        any(na.omit(data[, ftime]) < 0))
       stop(
         sprintf('%s should be numeric values > 0', shQuote(ftime))
       )
@@ -178,6 +179,10 @@ pvalr <- function(pvals, sig.limit = 0.001, digits = 3L,
       paste0(c('','p = ')[show.p], roundr(x, nd))
     }
   }, sig.limit)
+}
+
+rescaler <- function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
+  (x - from[1L]) / diff(from) * diff(to) + to[1L]
 }
 
 roundr <- function(x, digits = 1L) {
