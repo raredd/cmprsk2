@@ -79,7 +79,7 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
   na.action <- match.fun(na.action)
   
   subset <- subset %||% rep_len(TRUE, nrow(data))
-  data   <- data[subset, ]
+  data   <- droplevels(data[subset, ])
   
   idx <- !complete.cases(data[, c(form$lhs, form$rhs)])
   if (any(!!(n <- as.integer(sum(idx))))) {
@@ -97,12 +97,13 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
   
   ci <- cuminc(data[, form$ftime], data[, form$fstatus],
                as.factor(group), as.factor(strata),
-               rho, cencode %||% form$cencode, subset, na.action)
+               rho, cencode %||% form$cencode, rep_len(TRUE, nr), na.action)
   ci <- list(
     cuminc  = ci,
     cuminc2 = setNames(
-      cbind.data.frame(
-        data[, c(form$ftime, form$fstatus)], group, strata, form$cencode
+      data.frame(
+        data[, c(form$ftime, form$fstatus)], group, strata, form$cencode,
+        stringsAsFactors = FALSE
       ),
       c('time', 'status', 'group', 'strata', 'cencode')
     )
@@ -122,8 +123,48 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
 #' table, Gray's test results, and other features.
 #' 
 #' @param x an object of class \code{\link{cuminc2}}
+#' @param col.ci,lty.ci,lwd.ci line color, type, and width for each curve
+#' @param events logical; if \code{TRUE}, a cumulative events table is drawn
+#' @param atrisk logical; if \code{TRUE}, the number at risk is added to the
+#' events table
+#' @param events.total logical or numeric; if \code{TRUE}, cumulative events
+#' for each group is added to events table at a calculated position; for more
+#' control, use a specific x-coordinate
+#' @param wh.events a character string giving the type of \code{events} table
+#' to show; one of \code{"events"} (cumulative number of events), \code{"est"}
+#' (estimates, see \code{\link[cmprsk]{timepoints}}), \code{"est.sd"} (estimate
+#' +/- standard deviation), or \code{"est.ci"} (estimate with confidence
+#' inverval)
+#' @param events.lab heading for events table
+#' @param events.digits when estimates are shown in events table (see
+#' \code{wh.events}), number of digits past the decimal to show
+#' @param events.lines logical; draw lines next to groups in events table
+#' @param events.col logical or a vector with colors for events table text;
+#' if \code{TRUE}, \code{col.ci} will be used
 #' @param main title of plot
 #' @param xlab,ylab x- and y-axis labels
+#' @param groups.lab labels for each line in \code{events} table
+#' @param xlim,ylim x- and y-axis limits
+#' @param cex.axis text size for axes labels, \code{gy_test}, abd events table
+#' @param gy_test logical; if \code{TRUE} the tests of group equality will
+#' be shown
+#' @param split optionally split plot by unique competing risks or group;
+#' one of \code{FALSE} (default, no splitting), \code{"group"}, or
+#' \code{"event"}
+#' @param xaxis.at,yaxis.at positions for x- and y-axis labels and ticks
+#' @param xaxis.lab,yaxis.lab x- and y-axis tick labels
+#' @param events.at x-coordinates to show events table (default is
+#' \code{xaxis.at})
+#' @param groups.order order of groups in events table
+#' @param extra.margin increase left margin when groups labels in events
+#' table are long (note that this will be overridden by \code{mar})
+#' @param mar margins; see \code{mar} section in \code{\link{par}}
+#' @param add logical; if \code{TRUE}, \code{par}s are not reset; allows for
+#' multiple panels, e.g., when using \code{par(mfrow = c(1, 2))}
+#' @param panel.first an expression to be evaluated after the plot axes are
+#' set up but before any plotting takes place
+#' @param panel.last an expression to be evaluated after plotting but before
+#' returning from the function
 #' @param ... additional parameters (\code{font}, \code{mfrow}, \code{bty},
 #' \code{tcl}, \code{cex.lab}, \code{xaxs}, etc) passed to \code{\link{par}}
 #' 
@@ -132,6 +173,7 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
 #' 
 #' @examples
 #' tp <- within(transplant, {
+#'   futime[futime == 0] <- 1
 #'   age50 <- factor(+(age > 50))
 #'   age_cat <- cut(age, c(0, 40, 60, Inf), c('<40', '40-60', '60+'))
 #' })
@@ -145,17 +187,16 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
 #' plot(ci1, lty.ci = c(1,1,2,2,3,3), col.ci = 1:2)
 #' 
 #' ci2 <- cuminc2(Surv(futime, event(censored) == death) ~ 1, tp)
-#' plot(ci2, wh.events = 'est')
+#' plot(ci2, wh.events = 'est', events.digits = 2, groups.order = c(2,1,3))
 #' 
 #' @export
 
 ciplot <- function(x,
-                   lty.ci = par('lty'), lwd.ci = par('lwd'),
                    col.ci = seq_along(xx),
+                   lty.ci = par('lty'), lwd.ci = par('lwd'),
                    
-                   events = TRUE,
+                   events = TRUE, atrisk = TRUE, events.total = TRUE,
                    wh.events = c('events', 'est', 'est.sd', 'est.ci'),
-                   col.events = col.ci,
                    events.lab = NULL,
                    events.digits = 3L,
                    events.lines = TRUE, events.col = FALSE,
@@ -163,6 +204,7 @@ ciplot <- function(x,
                    main = NULL,
                    xlab = 'Time', ylab = 'Probability',
                    groups.lab = names(xx),
+                   
                    xlim = NULL, ylim = NULL,
                    cex.axis = par('cex.axis'),
                    gy_test = TRUE,
@@ -172,9 +214,9 @@ ciplot <- function(x,
                    xaxis.lab = xaxis.at, yaxis.lab = yaxis.at,
                    events.at = xaxis.at,
                    groups.order = seq_along(xx),
-                   extra.margin = 5L,
-                   panel.first = NULL, panel.last = NULL, 
-                   add = FALSE, mar = NULL, ...) {
+                   
+                   extra.margin = 5L, mar = NULL, add = FALSE,
+                   panel.first = NULL, panel.last = NULL, ...) {
   x <- if (inherits(x, 'cuminc2'))
     x
   else if (inherits(x, 'cuminc')) {
@@ -187,7 +229,9 @@ ciplot <- function(x,
   
   if (!identical(split, FALSE)) {
     args <- as.list(match.call())
-    args$split <- FALSE
+    args$split  <- FALSE
+    ## dont count censoring multiple times
+    # args$atrisk <- FALSE
     
     sp <- split_cuminc(x, split)
     for (ii in sp) {
@@ -234,14 +278,19 @@ ciplot <- function(x,
   
   wh.events <- match.arg(wh.events)
   
+  if (!identical(events.total, FALSE)) {
+    total.at <- events.total
+    events.total <- TRUE
+  }
+  
   op <- par(no.readonly = TRUE)
   if (!add)
     on.exit(par(op))
   
-  par(mar = c(4 + ng * events,
+  par(mar = c(4 + ng * events + atrisk,
               4 + pmax(4, extra.margin) - 3 * !events,
               2,
-              2 + 3 * events))
+              2 + 3 * events * events.total))
   par(...)
   if (!is.null(mar))
     par(mar = mar)
@@ -266,7 +315,7 @@ ciplot <- function(x,
   
   ## ci lines
   u0 <- u1 <- par('usr')
-  u1[2L] <- xlim[2L]
+  u1[2L] <- xlim[2L] * 1.01
   do.call('clip', as.list(u1))
   for (ii in seq.int(ng))
     lines(xx[[ii]][[1L]], xx[[ii]][[2L]], ...,
@@ -275,6 +324,16 @@ ciplot <- function(x,
   
   if (events) {
     usr <- par('usr')
+    
+    if (atrisk) {
+      ng <- ng + 1L
+      groups.order <- c(groups.order, ng + 1L)
+      groups.lab   <- c(groups.lab, 'At-risk')[seq.int(ng)]
+      
+      col.ci <- c(col.ci, NA)
+      lty.ci <- c(lty.ci, if (is.character(lty.ci)) 'blank' else 0)
+      lwd.ci <- c(lwd.ci, 0)
+    }
     
     events.at <- events.at[events.at < usr[2L]]
     
@@ -307,16 +366,20 @@ ciplot <- function(x,
           col = col.events, at = group.name.pos, cex = cex.axis, font = 2L)
     
     ## labels for total events
-    total.lab <- 'Total events'
-    n.events <- x$cuminc2
-    n.events <- n.events[n.events$status %ni% n.events$cencode, ]
-    n.events <- with(droplevels(n.events), table(group, status))
-    mtext(c(n.events), side = 1L, at = abs(group.name.pos) + usr[2L],
-          line = line.pos, adj = 1, col = col.events, las = 1L,
-          cex = cex.axis, font = 2L)
-    mtext(total.lab, side = 1L, at = abs(group.name.pos) + usr[2L],
-          line = 1.5, adj = 1, col = 1L, las = 1L, cex = cex.axis,
-          font = 2L)
+    if (events.total) {
+      at <- if (isTRUE(total.at))
+        abs(group.name.pos) + usr[2L] else total.at
+      total.lab <- 'Total events'
+      n.events <- x$cuminc2
+      n.events <- n.events[n.events$status %ni% n.events$cencode, ]
+      n.events <- with(droplevels(n.events), table(group, status))
+      if (atrisk)
+        n.events <- c(n.events, NA)
+      mtext(c(n.events), side = 1L, at = at, line = line.pos, adj = 1,
+            col = col.events, las = 1L, cex = cex.axis, font = 2L)
+      mtext(total.lab, side = 1L, at = at, line = 1.5, adj = 1,
+            col = 1L, las = 1L, cex = cex.axis, font = 2L)
+    }
     
     ## draw matching lines for n events  
     if (events.lines)
@@ -337,12 +400,21 @@ ciplot <- function(x,
       est.ci = timepoints2(x, times = events.at, sd = FALSE, html = FALSE,
                            ci = TRUE, digits = events.digits)
     )
+    
     d1 <- data.frame(time = rep(as.numeric(colnames(ss)), each = nrow(ss)),
                      n.risk = c(ss), strata = rep(rownames(ss), ncol(ss)),
                      stringsAsFactors = FALSE)
     d1$strata <- factor(d1$strata, rownames(ss))
     # d1 <- d1[d1$n.risk > 0, ]
     d2 <- split(d1, d1$strata)
+    
+    if (atrisk)
+      d2 <- c(d2, list('At-risk' = data.frame(
+        time = as.numeric(colnames(ss)),
+        n.risk = summary(x, times = events.at)$total_atrisk,
+        strata = 'At-risk',
+        stringsAsFactors = FALSE
+      )))
     
     ## right-justify numbers
     ndigits <- lapply(d2, function(x) nchar(x[, 2L]))
@@ -355,6 +427,7 @@ ciplot <- function(x,
       w.adj <- strwidth('0', cex = cex.axis, font = par('font')) /
         2 * nd[seq.int(nrow(tmp))]
       mtext(tmp$n.risk, side = 1L, at = tmp$time + w.adj, cex = cex.axis,
+            font = if (atrisk & ii == ng) 2L else 1L,
             las = 1L, line = line.pos[ii], adj = 1, col = col.events[ii])
     }
   }
@@ -365,7 +438,7 @@ ciplot <- function(x,
     if (is.null(txt))
       invisible(NULL)
     else legend('topleft', legend = paste0(names(txt), ': ', txt),
-                bty = 'n')
+                bty = 'n', cex = cex.axis)
   }
   
   panel.last
@@ -388,6 +461,41 @@ plot.cuminc2 <- ciplot
 #' @param by optional character string of stratification variable
 #' @param single logical; if TRUE, each level of by will be drawn in a separate window
 #' @param cencode unique value of \code{event} denoting censoring
+#' @param gy_test one of \code{FALSE} (no test performed), a numeric value
+#' (passed to \code{\link[cmprsk]{cuminc}} as the \code{rho} value), or
+#' \code{TRUE} (default, \code{rho = 0})
+#' @param main title(s) of plot(s)
+#' @param ylab y-axis label
+#' @param sub sub-title displayed in upper left corner; should be a character
+#' vector with length equal to the number of panels (i.e., the number of
+#' unique values of \code{by} or length one if \code{by} was not given)
+#' @param groups_lab events table group labels; should be a character vector
+#' with length equal to the number of groups
+#' @param fig_lab figure panel labels; should be a character vector with
+#' length equal to the number of panels (i.e., the number of unique values of
+#' \code{by} or length one if \code{by} was not given)
+#' @param col.ci color for individual curves or for all curves in a plot if
+#' \code{by} is given and \code{map.col = TRUE}; if \code{col.ci} is a named
+#' vector which matches the group labels, then colors are mapped to the
+#' corresponding groups; see \code{\link{ciplot}}
+#' @param map.col logical; if \code{TRUE}, \code{col.ci} will be the color
+#' of all curves in each plot (only used when \code{by} is non-missing)
+#' @param time character string of the time variable (optional)
+#' @param add logical; if \code{FALSE} (default), resets graphical parameters
+#' to settings before \code{ciplot_by} was called; set to \code{TRUE} for
+#' adding to existing plots
+#' @param plot logical; if \code{FALSE}, no plot is created but a list with
+#' \code{\link{cuminc2}} object(s) is returned
+#' @param ... additional arguments passed to \code{\link{ciplot}} or graphical
+#' parameters subsequently passed to \code{\link{par}}
+#' 
+#' @return
+#' Invisibly returns a list of \code{\link{cuminc2}} object(s) used to
+#' generate plot(s). If \code{by} was used, there will be a list element for
+#' each unique value.
+#' 
+#' @seealso
+#' \code{\link{ciplot}}; \code{\link{cuminc2}}; \code{\link[cmprsk]{cuminc}}
 #' 
 #' @examples
 #' ## basic usage: Surv(time, event) ~ 1
@@ -399,11 +507,17 @@ plot.cuminc2 <- ciplot
 #' ciplot_by('sex', time = 'futime', event = 'event',
 #'           data = transplant, by = 'abo', single = FALSE)
 #' 
+#' 
+#' par(mfrow = c(1, 2))
+#' ciplot_by('sex', time = 'futime', event = 'event',
+#'           data = transplant, by = 'sex', xlim = c(0, 1500),
+#'           single = FALSE, events.total = 2100)
+#' 
 #' @export
 
 ciplot_by <- function(rhs = '1', event, data, by = NULL, single = TRUE,
                       cencode = NULL, gy_test = TRUE,
-                      main = NULL, ylab = NULL, sub = NULL, strata_lab = NULL,
+                      main = NULL, ylab = NULL, sub = NULL, groups_lab = NULL,
                       fig_lab = NULL, col.ci = NULL, map.col = FALSE,
                       time = NULL, add = FALSE, plot = TRUE, ...) {
   if (is.logical(gy_test)) {
@@ -453,7 +567,7 @@ ciplot_by <- function(rhs = '1', event, data, by = NULL, single = TRUE,
   }
   
   ## define these before passing to loop
-  mlabs <- is.null(strata_lab)
+  mlabs <- is.null(groups_lab)
   msub  <- is.null(sub)
   fig   <- if (length(sp) > 1L & is.null(fig_lab))
     LETTERS[seq_along(sp)] else if (is.null(fig_lab)) '' else fig_lab
@@ -467,8 +581,8 @@ ciplot_by <- function(rhs = '1', event, data, by = NULL, single = TRUE,
     
     col.ci <- setNames(
       col.ci %||% seq_along(xx),
-      if (by == rhs || is.null(strata_lab) || identical(strata_lab, FALSE))
-        NULL else strata_names %||% names(sl$strata)
+      if (by == rhs || is.null(groups_lab) || identical(groups_lab, FALSE))
+        NULL else names(sl$strata)
     )
     if (length(sp) != length(col.ci))
       col.ci <- if (map.col)
@@ -557,11 +671,14 @@ print.cuminc2 <- function(x, ...) {
 #' each type (excluding censored observations)}
 #' \item{\code{total_groups}}{a vector giving the number by group (including
 #' censored observations)}
+#' \item{\code{total_atrisk}}{a vector giving the number remaining in the
+#' risk set regardless of event or censoring}
 #' 
 #' @examples
 #' ci <- cuminc2(Surv(futime, event(censored)) ~ sex, transplant)
-#' ci <- cuminc2(Surv(futime, event(censored)) ~ 1, transplant)
 #' summary(ci)
+#' 
+#' ci <- cuminc2(Surv(futime, event(censored)) ~ 1, transplant)
 #' summary(ci, times = 0:10 * 100)
 #'
 #' @export
@@ -600,24 +717,38 @@ summary.cuminc2 <- function(object, times = NULL, digits = 5L, ...) {
   res <- do.call('rbind', sp)
   rownames(res) <- paste(gr, rep(names(sp), each = length(gr)))
   colnames(res) <- times
+  
   total_events <- setNames(c(table(x$group, x$status)), rownames(res))
+  
   ## "atrisk"
+  total_atrisk <- object$cuminc2[order(object$cuminc2$time), ]
+  total_atrisk <- get_events(NULL, total_atrisk$time, times, TRUE)
   # res <- c(total_events) - res
   
-  c(tp, list(events = res, total_events = total_events, 
-             total_groups = c(table(object$cuminc2$group))))
+  l <- list(
+    events = res, total_events = total_events,
+    total_groups = c(table(object$cuminc2$group)),
+    total_atrisk = total_atrisk
+  )
+  
+  c(tp, l)
 }
 
-get_events <- function(data, time, timepoints) {
+get_events <- function(data, time, timepoints, atrisk = FALSE) {
   timepoints <- as.numeric(timepoints)
+  
+  if (atrisk) {
+    res <- sapply(timepoints, function(x) sum(time > x))
+    return(setNames(res, timepoints))
+  }
   
   res <- lapply(timepoints, function(x) {
     idx <- time <= x
-    res <- if (x < 0)
+    res <- if (x < 0 || !sum(idx))
       matrix(0L, 1L, ncol(data))
     else if (sum(idx))
       data[max.col(t(idx), ties.method = 'last'), ]
-    else data[1L, ]
+    else stop('get_events - check this')
     as.matrix(res)
   })
   
@@ -659,7 +790,7 @@ split_cuminc <- function(x, wh = c('event', 'group')) {
   gy <- !is.null(ci$Tests)
   c2 <- inherits(x, 'cuminc2')
   
-  mat <- do.call('rbind', strsplit(names(xx), ' (?=\\S)+', perl = TRUE))
+  mat <- do.call('rbind', strsplit(names(xx), ' (?=\\S+$)', perl = TRUE))
   gr <- unique(mat[, 1L])
   ev <- unique(mat[, 2L])
   
@@ -674,7 +805,8 @@ split_cuminc <- function(x, wh = c('event', 'group')) {
                tmp$cuminc$Tests <- ci$Tests[grep(ii, rownames(ci$Tests)), , drop = FALSE]
              
              if (c2) {
-               dat <- x$cuminc2[x$cuminc2[, 'status'] %in% ii, ]
+               cc  <- as.character(x$cuminc2$cencode[1L])
+               dat <- x$cuminc2[x$cuminc2[, 'status'] %in% c(ii, cc), ]
                tmp <- c(tmp, list(cuminc2 = droplevels(dat)))
              }
              
