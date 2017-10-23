@@ -1,6 +1,6 @@
 ### utils
-# %||%, %inside%, %ni%, assert_class, islist, is.loaded, parse_formula, pvalr,
-# strata, terms.inner, sterms.inner, trimwsq
+# %||%, %inside%, %ni%, assert_class, islist, is.loaded, nth, parse_formula,
+# pvalr, strata, terms.inner, sterms.inner, trimwsq
 # 
 # formula s3 methods:
 # is.crr2, is.crr2.default, is.crr2.formula, is.cuminc2, is.cuminc2.default,
@@ -179,6 +179,30 @@ pvalr <- function(pvals, sig.limit = 0.001, digits = 3L,
       paste0(c('','p = ')[show.p], roundr(x, nd))
     }
   }, sig.limit)
+}
+
+nth <- function(x, p, n = NULL, keep_split = FALSE, repl = '$$$', ...) {
+  # s <- 'this  is a  test string to use   for testing   purposes'
+  # nth(s, '\\s+')
+  # nth(s, '\\s+', 3)
+  # nth(s, '\\s+', c(3, 5))
+  # nth(s, '\\s+', c(3, 5), keep_split = TRUE)
+  # nth(s, '\\s{2,}', keep_split = TRUE)
+  # nth(s, '\\s{2,}', 2:4)
+  stopifnot(
+    is.character(x),
+    is.character(p),
+    length(x) == 1L
+  )
+  m <- gregexpr(p, x, ...)
+  l <- length(attr(m[[1L]], 'match.length'))
+  n <- if (is.null(n))
+    seq.int(l) else n[n < l]
+  
+  regmatches(x, m)[[1L]][n] <- if (keep_split)
+    paste0(repl, regmatches(x, m)[[1L]][n], repl) else repl
+  
+  strsplit(x, repl, fixed = TRUE)[[1L]]
 }
 
 rescaler <- function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {

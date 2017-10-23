@@ -148,6 +148,9 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
 #' @param cex.axis text size for axes labels, \code{gy_test}, abd events table
 #' @param gy_test logical; if \code{TRUE} the tests of group equality will
 #' be shown
+#' @param test_details logical; if \code{TRUE} (default), all test details
+#' (test statistic, degrees of freedom, p-value) are shown; if \code{FALSE},
+#' only the p-value is shown
 #' @param split optionally split plot by unique competing risks or group;
 #' one of \code{FALSE} (default, no splitting), \code{"group"}, or
 #' \code{"event"}
@@ -207,7 +210,7 @@ ciplot <- function(x,
                    
                    xlim = NULL, ylim = NULL,
                    cex.axis = par('cex.axis'),
-                   gy_test = TRUE,
+                   gy_test = TRUE, test_details = TRUE,
                    split = FALSE,
                    xaxis.at = pretty(xlim),
                    yaxis.at = pretty(ylim),
@@ -229,7 +232,7 @@ ciplot <- function(x,
   
   if (!identical(split, FALSE)) {
     args <- as.list(match.call())
-    args$split  <- FALSE
+    args$split <- FALSE
     ## dont count censoring multiple times
     # args$atrisk <- FALSE
     
@@ -434,7 +437,8 @@ ciplot <- function(x,
   
   ## add gray text in upper right corner
   if (gy_test) {
-    txt <- tryCatch(gy_text(ci), error = function(e) NULL)
+    txt <- tryCatch(gy_text(ci, details = test_details),
+                    error = function(e) NULL)
     if (is.null(txt))
       invisible(NULL)
     else legend('topleft', legend = paste0(names(txt), ': ', txt),
@@ -522,11 +526,9 @@ ciplot_by <- function(rhs = '1', event, data, by = NULL, single = TRUE,
                       time = NULL, add = FALSE, plot = TRUE, ...) {
   if (is.logical(gy_test)) {
     rho <- 0
-  } else if (is.numeric(gy_test)) {
-    rho <- gy_test
-    gy_test <- TRUE
   } else {
-    rho <- 0
+    rho <- if (is.numeric(gy_test))
+      gy_test else 0
     gy_test <- TRUE
   }
   
@@ -766,7 +768,7 @@ gy_pval <- function(x, details = FALSE) {
     x$Tests else x$Tests[, 2L]
 }
 
-gy_text <- function(x, ...) {
+gy_text <- function(x, ..., details = TRUE) {
   # gy_text(cuminc2)
   if (inherits(x, c('cuminc2', 'cuminc')))
     x <- gy_pval(x, TRUE)
@@ -780,17 +782,31 @@ gy_text <- function(x, ...) {
   })
   
   # bquote(paste(chi^2, ' = ', .(txt)))
-  txt
+  if (details)
+    txt
+  else setNames(pvalr(x[, 'pv'], show.p = TRUE), rownames(x))
 }
 
-split_cuminc <- function(x, wh = c('event', 'group')) {
-  ci <- x[['cuminc']]
-  xx <- ci[names(ci) != 'Tests']
-  
-  gy <- !is.null(ci$Tests)
+split_cuminc <- function(x, wh = c('event', 'group'), ws_split = 'last') {
   c2 <- inherits(x, 'cuminc2')
+  sp_str <- switch(
+    ws_split,
+    last  = ' (?=\\S+$)',
+    first = ' (?=.+)',
+    as.numeric(ws_split)
+  )
   
-  mat <- do.call('rbind', strsplit(names(xx), ' (?=\\S+$)', perl = TRUE))
+  ci <- if (c2)
+    x[['cuminc']] else x
+  xx <- ci[names(ci) != 'Tests']
+  gy <- !is.null(ci$Tests)
+  
+  mat <- do.call(
+    'rbind',
+    if (is.numeric(sp_str))
+      sapply(names(xx), function(x) nth(x, '\\s+', sp_str))
+    else strsplit(names(xx), sp_str, perl = TRUE)
+  )
   gr <- unique(mat[, 1L])
   ev <- unique(mat[, 2L])
   
@@ -810,10 +826,11 @@ split_cuminc <- function(x, wh = c('event', 'group')) {
                tmp <- c(tmp, list(cuminc2 = droplevels(dat)))
              }
              
-             structure(tmp, class = c('cuminc', 'cuminc2')[c2 + 1L])
+             if (c2)
+               structure(tmp, class = 'cuminc2') else tmp
            })
-           names(xx_ev) <- ev
-           xx_ev
+           
+           setNames(xx_ev, ev)
          },
          
          group = {
@@ -825,10 +842,11 @@ split_cuminc <- function(x, wh = c('event', 'group')) {
                tmp <- c(tmp, list(cuminc2 = droplevels(dat)))
              }
              
-             structure(tmp, class = c('cuminc', 'cuminc2')[c2 + 1L])
+             if (c2)
+               structure(tmp, class = 'cuminc2') else tmp
            })
-           names(xx_gr) <- gr
-           xx_gr
+           
+           setNames(xx_gr, gr)
          }
   )
 }

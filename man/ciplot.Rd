@@ -11,9 +11,9 @@ ciplot(x, col.ci = seq_along(xx), lty.ci = par("lty"),
   events.lab = NULL, events.digits = 3L, events.lines = TRUE,
   events.col = FALSE, main = NULL, xlab = "Time", ylab = "Probability",
   groups.lab = names(xx), xlim = NULL, ylim = NULL,
-  cex.axis = par("cex.axis"), gy_test = TRUE, split = FALSE,
-  xaxis.at = pretty(xlim), yaxis.at = pretty(ylim), xaxis.lab = xaxis.at,
-  yaxis.lab = yaxis.at, events.at = xaxis.at,
+  cex.axis = par("cex.axis"), gy_test = TRUE, test_details = TRUE,
+  split = FALSE, xaxis.at = pretty(xlim), yaxis.at = pretty(ylim),
+  xaxis.lab = xaxis.at, yaxis.lab = yaxis.at, events.at = xaxis.at,
   groups.order = seq_along(xx), extra.margin = 5L, mar = NULL,
   add = FALSE, panel.first = NULL, panel.last = NULL, ...)
 
@@ -23,9 +23,9 @@ ciplot(x, col.ci = seq_along(xx), lty.ci = par("lty"),
   events.lab = NULL, events.digits = 3L, events.lines = TRUE,
   events.col = FALSE, main = NULL, xlab = "Time", ylab = "Probability",
   groups.lab = names(xx), xlim = NULL, ylim = NULL,
-  cex.axis = par("cex.axis"), gy_test = TRUE, split = FALSE,
-  xaxis.at = pretty(xlim), yaxis.at = pretty(ylim), xaxis.lab = xaxis.at,
-  yaxis.lab = yaxis.at, events.at = xaxis.at,
+  cex.axis = par("cex.axis"), gy_test = TRUE, test_details = TRUE,
+  split = FALSE, xaxis.at = pretty(xlim), yaxis.at = pretty(ylim),
+  xaxis.lab = xaxis.at, yaxis.lab = yaxis.at, events.at = xaxis.at,
   groups.order = seq_along(xx), extra.margin = 5L, mar = NULL,
   add = FALSE, panel.first = NULL, panel.last = NULL, ...)
 }
@@ -71,6 +71,10 @@ if \code{TRUE}, \code{col.ci} will be used}
 
 \item{gy_test}{logical; if \code{TRUE} the tests of group equality will
 be shown}
+
+\item{test_details}{logical; if \code{TRUE} (default), all test details
+(test statistic, degrees of freedom, p-value) are shown; if \code{FALSE},
+only the p-value is shown}
 
 \item{split}{optionally split plot by unique competing risks or group;
 one of \code{FALSE} (default, no splitting), \code{"group"}, or
