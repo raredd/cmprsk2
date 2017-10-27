@@ -118,8 +118,8 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   Name <- if (length(name) > 1L)
     as.list(name)[[2L]] else name
   
-  lhs  <- form[[1L]][1:2]
-  rhs  <- if (attr(term, 'dots'))
+  lhs <- form[[1L]][1:2]
+  rhs <- if (attr(term, 'dots'))
     setdiff(names(data), lhs) else form[[1L]][-(1:2)]
   
   status   <- levels(as.factor(data[, lhs[2L]]))
@@ -130,23 +130,34 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
     stop(
       sprintf('Variable%s %s not found in %s',
               ifelse(length(wh) > 1L, 's', ''),
-              paste(shQuote(wh), collapse = ', '), shQuote(name)),
+              toString(shQuote(wh)), shQuote(name)),
       call. = FALSE
     )
-  if (any(c(cencode, failcode) %ni% data[, lhs[2L]]) |
-      (wh <- length(unique(data[, lhs[2L]])) <= 2L))
-    stop(
-      sprintf('Values %s and %s %sshould be in %s[, %s]',
-              shQuote(cencode), shQuote(failcode),
-              ifelse(wh > 2L, '', 'and at least one other unique value '),
+  if (any(wh <- c(cencode, failcode) %ni% data[, lhs[2L]]))
+    warning(
+      sprintf('%s not found in %s[, %s]',
+              toString(shQuote(c(cencode, failcode)[wh])),
               deparse(name), shQuote(form[[1L]][2L])),
+      call. = FALSE
+    )
+  if (length(wh <- unique(data[, lhs[2L]])) <= 2L)
+    warning(
+      gsub('\\n\\s{2,}', ' ',
+           sprintf('Only %s found in in %s[, %s]\n Typically, censoring,
+                   event of interest, and >=1 competing event are used',
+              toString(shQuote(wh)), deparse(name), shQuote(form[[1L]][2L]))
+      ),
       call. = FALSE
     )
 
   ## all events of interest minus censored
   crisks <- if (!is.null(which))
     which else c(failcode, setdiff(status, c(cencode, failcode)))
-  stopifnot(length(crisks) >= 1L, failcode %in% status, cencode %in% status)
+  stopifnot(
+    length(crisks) >= 1L
+    # failcode %in% status,
+    # cencode %in% status
+  )
   
   cengroup <- cengroup %||% rep_len(1L, nrow(data))
 
