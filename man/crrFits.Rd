@@ -23,7 +23,7 @@ models only make sense for ones fit to the same data set.
 ## example, figures, tables from
 ## http://www.nature.com/bmt/journal/v45/n9/full/bmt2009359a.html
 
-bmt <- read.csv('http://www.stat.unipg.it/luca/R/bmtcrr.csv')
+bmt <- read.csv('http://www.stat.unipg.it/luca/misc/bmtcrr.csv')
 bmt <- within(bmt, {
   Sex <- relevel(Sex, 'M')
   Phase <- relevel(Phase, 'Relapse')
@@ -43,9 +43,10 @@ m6 <- with(bmt, crr(ftime, Status, cov1[, c(4:6,7,3)]))
 
 crrFits(m1, m2, m3, m4, m5, m6, p = 3)
 
+
 par(mfrow = c(2,2))
 with(m2, {
-  for (ii in 1:ncol(res))
+  for (ii in seq.int(ncol(res)))
     scatter.smooth(uftime, res[, ii],
                    main = gsub('Phase', '', names(coef)[ii]),
                    xlab = 'Failure time',
@@ -57,9 +58,9 @@ pred <- predict(m2, pred)
 
 plot(pred, xlab = 'Failure time', ylab = 'CIF', col = 1:4, lty = 1,
      ylim = c(0, 1))
-legend('top', lty = 1, col = 1:4, horiz = TRUE, bty = 'n',
+legend('top', lty = 1L, col = 1:4, horiz = TRUE, bty = 'n',
        title = 'Phase', legend = levels(bmt$Phase),
-       x.intersp = .1, y.intersp = 0.5)
+       x.intersp = 0.1, y.intersp = 0.5)
 }
 
 }
