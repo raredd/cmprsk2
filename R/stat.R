@@ -240,22 +240,23 @@ terms.crr <- terms.crr2
 #' @export
 
 crrFits <- function(..., p) {
-  l <- list(...)
+  l <- if (islist(..1)) {
+    if (inherits(..1[[1L]], 'crr2') & is.null(coef(..1[[1L]])))
+      unlist(c(...), recursive = FALSE) else c(...)
+  } else {
+    if (inherits(..1, 'crr2') & is.null(coef(..1)))
+      c(...) else list(...)
+  }
   
-  ## crr2 objects are fit to same data and inherit crr already
-  if (inherits(..1, 'crr2')) {
-    l <- if (is.null(coef(..1)))
-      c(...) else list(..1)
-    ## drop cox models
-    l <- Filter(function(x) !inherits(x, 'coxph'), l)
-  } else
-    ## for a manual list of crr objects?
-    stopifnot(
-      all(sapply(l, inherits, 'crr')),
-      ## assert same data was used to fit
-      # all(diff(sapply(l, function(x) x[['loglik.null']])) == 0),
-      all(diff(sapply(l, function(x) x[['n']])) == 0)
-    )
+  ## drop cox models from crr2 objects
+  l <- Filter(function(x) !inherits(x, 'coxph'), l)
+  
+  stopifnot(
+    all(sapply(l, inherits, 'crr')),
+    ## assert same data was used to fit
+    # all(diff(sapply(l, function(x) x[['loglik.null']])) == 0),
+    all(diff(sapply(l, function(x) x[['n']])) == 0)
+  )
   
   null <- l[[1L]]
   null$loglik <- null$loglik.null
