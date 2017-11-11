@@ -113,6 +113,30 @@ returning from the function}
 Plot a \code{\link{cuminc2}} object optional cumulative events or estimate
 table, Gray's test results, and other features.
 }
+\examples{
+tp <- within(transplant, {
+  futime <- futime + 1e-8
+  age50 <- factor(+(age > 50))
+  age_cat <- cut(age, c(0, 40, 60, Inf), c('<40', '40-60', '60+'))
+})
+
+ci1 <- cuminc2(Surv(futime, event(censored)) ~ age_cat, tp)
+plot(ci1)
+plot(ci1, split = 'event')
+plot(ci1, split = 'event', events = FALSE, test_details = FALSE,
+     legend.args = list(x = 'topright', cex = 1.5, text.col = 2,
+                        title = "Gray\\'s test p-value for"))
+
+## also plots "cuminc" objects but without extra features
+plot(ci1$cuminc)
+
+ci1 <- cuminc2(Surv(futime, event(censored) == death) ~ age50, tp)
+plot(ci1, lty.ci = c(1,1,2,2,3,3), col.ci = 1:2)
+
+ci2 <- cuminc2(Surv(futime, event(censored) == death) ~ 1, tp)
+plot(ci2, wh.events = 'est', events.digits = 2, groups.order = c(2,1,3))
+
+}
 \seealso{
 \code{\link{cuminc2}}; \code{\link{summary.cuminc2}}
 }

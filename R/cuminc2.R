@@ -178,7 +178,7 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
 #' 
 #' @examples
 #' tp <- within(transplant, {
-#'   futime[futime == 0] <- 1
+#'   futime <- futime + 1e-8
 #'   age50 <- factor(+(age > 50))
 #'   age_cat <- cut(age, c(0, 40, 60, Inf), c('<40', '40-60', '60+'))
 #' })
@@ -188,7 +188,7 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
 #' plot(ci1, split = 'event')
 #' plot(ci1, split = 'event', events = FALSE, test_details = FALSE,
 #'      legend.args = list(x = 'topright', cex = 1.5, text.col = 2,
-#'                         title = 'Gray\'s test p-value for'))
+#'                         title = "Gray\'s test p-value for"))
 #' 
 #' ## also plots "cuminc" objects but without extra features
 #' plot(ci1$cuminc)
@@ -453,9 +453,9 @@ ciplot <- function(x,
         x = 'topleft', legend = paste0(names(txt), ': ', txt),
         bty = 'n', cex = cex.axis
       )
+      if (!islist(legend.args))
+        legend.args <- list()
       do.call('legend', modifyList(largs, legend.args))
-      # legend('topleft', legend = paste0(names(txt), ': ', txt),
-      #           bty = 'n', cex = cex.axis)
     }
   }
   
