@@ -12,10 +12,10 @@ ciplot(x, col.ci = seq_along(xx), lty.ci = par("lty"),
   events.col = FALSE, main = NULL, xlab = "Time", ylab = "Probability",
   groups.lab = names(xx), xlim = NULL, ylim = NULL,
   cex.axis = par("cex.axis"), gy_test = TRUE, test_details = TRUE,
-  split = FALSE, xaxis.at = pretty(xlim), yaxis.at = pretty(ylim),
-  xaxis.lab = xaxis.at, yaxis.lab = yaxis.at, events.at = xaxis.at,
-  groups.order = seq_along(xx), extra.margin = 5L, mar = NULL,
-  add = FALSE, panel.first = NULL, panel.last = NULL, ...)
+  legend.args = list(), split = FALSE, xaxis.at = pretty(xlim),
+  yaxis.at = pretty(ylim), xaxis.lab = xaxis.at, yaxis.lab = yaxis.at,
+  events.at = xaxis.at, groups.order = seq_along(xx), extra.margin = 5L,
+  mar = NULL, add = FALSE, panel.first = NULL, panel.last = NULL, ...)
 
 \method{plot}{cuminc2}(x, col.ci = seq_along(xx), lty.ci = par("lty"),
   lwd.ci = par("lwd"), events = TRUE, atrisk = TRUE,
@@ -24,10 +24,10 @@ ciplot(x, col.ci = seq_along(xx), lty.ci = par("lty"),
   events.col = FALSE, main = NULL, xlab = "Time", ylab = "Probability",
   groups.lab = names(xx), xlim = NULL, ylim = NULL,
   cex.axis = par("cex.axis"), gy_test = TRUE, test_details = TRUE,
-  split = FALSE, xaxis.at = pretty(xlim), yaxis.at = pretty(ylim),
-  xaxis.lab = xaxis.at, yaxis.lab = yaxis.at, events.at = xaxis.at,
-  groups.order = seq_along(xx), extra.margin = 5L, mar = NULL,
-  add = FALSE, panel.first = NULL, panel.last = NULL, ...)
+  legend.args = list(), split = FALSE, xaxis.at = pretty(xlim),
+  yaxis.at = pretty(ylim), xaxis.lab = xaxis.at, yaxis.lab = yaxis.at,
+  events.at = xaxis.at, groups.order = seq_along(xx), extra.margin = 5L,
+  mar = NULL, add = FALSE, panel.first = NULL, panel.last = NULL, ...)
 }
 \arguments{
 \item{x}{an object of class \code{\link{cuminc2}}}
@@ -76,6 +76,9 @@ be shown}
 (test statistic, degrees of freedom, p-value) are shown; if \code{FALSE},
 only the p-value is shown}
 
+\item{legend.args}{an optional list of \code{\link{legend}} arguments
+controlling the annotations when \code{gy_test = TRUE}}
+
 \item{split}{optionally split plot by unique competing risks or group;
 one of \code{FALSE} (default, no splitting), \code{"group"}, or
 \code{"event"}}
@@ -109,25 +112,6 @@ returning from the function}
 \description{
 Plot a \code{\link{cuminc2}} object optional cumulative events or estimate
 table, Gray's test results, and other features.
-}
-\examples{
-tp <- within(transplant, {
-  futime[futime == 0] <- 1
-  age50 <- factor(+(age > 50))
-  age_cat <- cut(age, c(0, 40, 60, Inf), c('<40', '40-60', '60+'))
-})
-
-ci1 <- cuminc2(Surv(futime, event(censored)) ~ age_cat, tp)
-plot(ci1)
-plot(ci1$cuminc)
-plot(ci1, split = 'event')
-
-ci1 <- cuminc2(Surv(futime, event(censored) == death) ~ age50, tp)
-plot(ci1, lty.ci = c(1,1,2,2,3,3), col.ci = 1:2)
-
-ci2 <- cuminc2(Surv(futime, event(censored) == death) ~ 1, tp)
-plot(ci2, wh.events = 'est', events.digits = 2, groups.order = c(2,1,3))
-
 }
 \seealso{
 \code{\link{cuminc2}}; \code{\link{summary.cuminc2}}

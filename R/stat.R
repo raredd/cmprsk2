@@ -255,7 +255,7 @@ crrFits <- function(..., p) {
     all(sapply(l, inherits, 'crr')),
     ## assert same data was used to fit
     # all(diff(sapply(l, function(x) x[['loglik.null']])) == 0),
-    all(diff(sapply(l, function(x) x[['n']])) == 0)
+    all(diff(sapply(l, function(x) x[['n']])) == 0L)
   )
   
   null <- l[[1L]]

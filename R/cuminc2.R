@@ -151,6 +151,8 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
 #' @param test_details logical; if \code{TRUE} (default), all test details
 #' (test statistic, degrees of freedom, p-value) are shown; if \code{FALSE},
 #' only the p-value is shown
+#' @param legend.args an optional list of \code{\link{legend}} arguments
+#' controlling the annotations when \code{gy_test = TRUE}
 #' @param split optionally split plot by unique competing risks or group;
 #' one of \code{FALSE} (default, no splitting), \code{"group"}, or
 #' \code{"event"}
@@ -183,8 +185,13 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
 #' 
 #' ci1 <- cuminc2(Surv(futime, event(censored)) ~ age_cat, tp)
 #' plot(ci1)
-#' plot(ci1$cuminc)
 #' plot(ci1, split = 'event')
+#' plot(ci1, split = 'event', events = FALSE, test_details = FALSE,
+#'      legend.args = list(x = 'topright', cex = 1.5, text.col = 2,
+#'                         title = 'Gray\'s test p-value for'))
+#' 
+#' ## also plots "cuminc" objects but without extra features
+#' plot(ci1$cuminc)
 #' 
 #' ci1 <- cuminc2(Surv(futime, event(censored) == death) ~ age50, tp)
 #' plot(ci1, lty.ci = c(1,1,2,2,3,3), col.ci = 1:2)
@@ -210,7 +217,7 @@ ciplot <- function(x,
                    
                    xlim = NULL, ylim = NULL,
                    cex.axis = par('cex.axis'),
-                   gy_test = TRUE, test_details = TRUE,
+                   gy_test = TRUE, test_details = TRUE, legend.args = list(),
                    split = FALSE,
                    xaxis.at = pretty(xlim),
                    yaxis.at = pretty(ylim),
@@ -441,8 +448,15 @@ ciplot <- function(x,
                     error = function(e) NULL)
     if (is.null(txt))
       invisible(NULL)
-    else legend('topleft', legend = paste0(names(txt), ': ', txt),
-                bty = 'n', cex = cex.axis)
+    else {
+      largs <- list(
+        x = 'topleft', legend = paste0(names(txt), ': ', txt),
+        bty = 'n', cex = cex.axis
+      )
+      do.call('legend', modifyList(largs, legend.args))
+      # legend('topleft', legend = paste0(names(txt), ': ', txt),
+      #           bty = 'n', cex = cex.axis)
+    }
   }
   
   panel.last
