@@ -151,8 +151,8 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
 #' @param test_details logical; if \code{TRUE} (default), all test details
 #' (test statistic, degrees of freedom, p-value) are shown; if \code{FALSE},
 #' only the p-value is shown
-#' @param legend.args an optional list of \code{\link{legend}} arguments
-#' controlling the annotations when \code{gy_test = TRUE}
+#' @param legend.args an optional \emph{named} list of \code{\link{legend}}
+#' arguments controlling the annotations when \code{gy_test = TRUE}
 #' @param split optionally split plot by unique competing risks or group;
 #' one of \code{FALSE} (default, no splitting), \code{"group"}, or
 #' \code{"event"}

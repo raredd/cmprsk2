@@ -76,8 +76,8 @@ be shown}
 (test statistic, degrees of freedom, p-value) are shown; if \code{FALSE},
 only the p-value is shown}
 
-\item{legend.args}{an optional list of \code{\link{legend}} arguments
-controlling the annotations when \code{gy_test = TRUE}}
+\item{legend.args}{an optional \emph{named} list of \code{\link{legend}}
+arguments controlling the annotations when \code{gy_test = TRUE}}
 
 \item{split}{optionally split plot by unique competing risks or group;
 one of \code{FALSE} (default, no splitting), \code{"group"}, or
