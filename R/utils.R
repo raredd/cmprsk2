@@ -57,7 +57,7 @@ is.crr2.formula <- function(x) {
            length(rapply(as.list(x)[2L], function(y)
              length(as.list(y)))) == 1L)
     deparse(x) else deparse(x[[2L]])
-  x <- paste(x, collapse = ' ')
+  x <- paste(x, collapse = '')
   
   ## checks for status(0) but not status(0) == 1
   # grepl('[^(]+\\([^(~]+\\((?=.+~|[^~]+$)', x, perl = TRUE)
@@ -81,6 +81,7 @@ is.cuminc2.formula <- function(x) {
            length(rapply(as.list(x)[2L], function(y)
              length(as.list(y)))) == 1L)
     deparse(x) else deparse(x[[2L]])
+  x <- paste(x, collapse = '')
   
   ## status(0) == 1 equality is optional
   grepl('Surv\\([^(]+\\([^(]+\\)\\s*(?:(==|%in%)[^)]+)?\\)', x)

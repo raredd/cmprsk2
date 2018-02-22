@@ -171,7 +171,7 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   
   formula <- sprintf('Surv(%s, %s == %s) ~ %s',
                      lhs[1L], lhs[2L], shQuote(failcode),
-                     deparse(formula[[3L]]))
+                     paste(deparse(formula[[3L]]), collapse = ''))
   formula <- as.formula(formula)
   
   ## add model.frame for use in other methods
