@@ -110,8 +110,8 @@ returning from the function}
 \code{tcl}, \code{cex.lab}, \code{xaxs}, etc) passed to \code{\link{par}}}
 }
 \description{
-Plot a \code{\link{cuminc2}} object optional cumulative events or estimate
-table, Gray's test results, and other features.
+Plot a \code{\link{cuminc2}} object with optional cumulative events or
+estimate table, Gray's test results, and other features.
 }
 \examples{
 tp <- within(transplant, {

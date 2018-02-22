@@ -119,8 +119,8 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
 
 #' \code{cuminc2} plotting method
 #' 
-#' Plot a \code{\link{cuminc2}} object optional cumulative events or estimate
-#' table, Gray's test results, and other features.
+#' Plot a \code{\link{cuminc2}} object with optional cumulative events or
+#' estimate table, Gray's test results, and other features.
 #' 
 #' @param x an object of class \code{\link{cuminc2}}
 #' @param col.ci,lty.ci,lwd.ci line color, type, and width for each curve
