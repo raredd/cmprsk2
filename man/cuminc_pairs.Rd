@@ -31,10 +31,12 @@ form <- Surv(futime, event(censored)) ~ sex
 cuminc_pairs(form, transplant)
 cuminc2(form, transplant)$cuminc$Tests
 
+
 ## more useful in the case of three or more levels
 form <- Surv(futime, event(censored)) ~ abo
 cuminc_pairs(form, transplant)$p.value
 cuminc2(form, transplant)$cuminc$Tests
+
 
 tp <- transplant[transplant$abo \%in\% c('A', 'B', 'O'), ]
 tp <- tp[tp$event \%in\% c('censored', 'ltx', 'death'), ]
