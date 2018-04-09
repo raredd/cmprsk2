@@ -11,7 +11,7 @@ Depends:
     cmprsk,
     survival
 Imports:
-    htmlTable (>= 1.0)
+    htmlTable
 Suggests:
     knitr,
     testthat

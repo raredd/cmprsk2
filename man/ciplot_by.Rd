@@ -77,18 +77,15 @@ ciplot_by(time = 'futime', event = 'event', data = transplant)
 ## with groups: Surv(time, event) ~ group
 ciplot_by('sex', time = 'futime', event = 'event',
           data = transplant)
+
 ciplot_by('sex', time = 'futime', event = 'event',
           data = transplant, by = 'abo', single = FALSE)
-
 
 par(mfrow = c(1, 2))
 ciplot_by('sex', time = 'futime', event = 'event',
           data = transplant, by = 'sex', xlim = c(0, 1500),
           single = FALSE, events.total = 2100)
 
-ciplot_by('sex', time = 'futime', event = 'event',
-          data = transplant, by = 'sex', xlim = c(0, 1500),
-          single = FALSE, events.total = 2100, split = 'event')
 }
 \seealso{
 \code{\link{ciplot}}; \code{\link{cuminc2}}; \code{\link[cmprsk]{cuminc}}
