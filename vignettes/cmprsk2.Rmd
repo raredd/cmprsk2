@@ -1,0 +1,104 @@
+<!--
+%\VignetteEngine{knitr::knitr}
+%\VignetteIndexEntry{cmprsk2 intro}
+-->
+
+## Subdistribution Analysis of Competing Risks
+ 
+* [intro](#intro)  
+* [design](#design)  
+* [examples](#examples)  
+* [install](#install)  
+
+```{r, message=FALSE}
+library('cmprsk2')
+library('htmlTable')
+```
+
+## intro
+
+Extensions to the **`cmprsk`** package:
+
+1. estimation, testing, and regression modeling of subdistribution functions in competing risks, as described in Gray (1988);
+
+1. A class of K-sample tests for comparing the cumulative incidence of a competing risk, Ann. Stat. 16:1141-1154, and Fine JP and Gray RJ (1999); and
+
+1. A proportional hazards model for the subdistribution of a competing risk, JASA, 94:496-509.
+ 
+## design
+
+The two main package functions, `cuminc2` and `crr2`, provide a convenient formula-interface to `cmprsk::cuminc` and `cmprsk::crr` to users who are familiar with using survival objects in the **`survival`** package.
+
+The syntax for creating survival objects is
+
+$$Surv(time, status) \sim rhs$$
+Similarly, the syntax for **`cmprsk`** formals is
+
+$$Surv(time, status(censor) == event) \sim rhs$$
+where `status` is a variable indicating status, normally including "0", "Censor", or "Censored" indicating censoring, and two or more unique event indicators for each competing risk. `event` in the formula will be one of the event indicators found in `status` and will be considered the event of interest.
+
+## examples
+
+### cumulative incidence
+
+Note in the formula that it is not necessary to specify the event of interest.
+
+```{r}
+ci <- cuminc2(Surv(futime, event(censored)) ~ sex, transplant)
+summary(ci)
+
+cmprsk::timepoints(ci$cuminc, times = 0:4 * 500)
+cmprsk2::timepoints2(ci)
+cmprsk2::timepoints2(ci, sd = TRUE, html = TRUE,
+                     caption = 'Table 1: Timepoints.')
+
+plot(ci)
+
+ci <- cuminc2(Surv(futime, event(censored)) ~ abo, transplant)
+cuminc_pairs(ci)$p.value
+
+plot(ci, split = 'event')
+```
+
+### competing risks regression
+
+While it is necessary to specify the event of interest in the `crr2` formula, this will be the _primary_ event of interest, that is, models are fit for all other unique competing events, and the primary event model will be listed first.
+
+Using `crr2(..., which = "event")` will only fit models the requested models.
+
+```{r}
+cr <- crr2(Surv(futime, event(censored) == death) ~ sex, transplant)
+summary(cr)
+
+
+cr <- crr2(Surv(futime, event(censored) == death) ~ sex + abo, transplant)
+summary(cr, html = TRUE)
+
+
+cr <- crr2(Surv(futime, event(censored) == ltx) ~ sex + abo, transplant,
+           cox = TRUE)
+summary(cr, combine_ci = TRUE, html = TRUE,
+        caption = 'Table 1: Competing risks.',
+        rnames = c('Female', paste('Type:', c('B', 'AB', 'O'))))
+
+
+cr <- crr2(Surv(futime, event(censored) == ltx) ~ sex + abo, transplant,
+           which = 'ltx')
+summary(cr, combine_ci = TRUE, html = TRUE,
+        caption = 'Table 1: Competing risks.',
+        tfoot = '<font size=1>Blood type reference: A</font>',
+        rnames = c('Female', paste('Type:', c('B', 'AB', 'O'))))
+```
+
+## install
+
+```{r, eval=FALSE}
+# install.packages('devtools')
+devtools::install_github('raredd/cmprsk2', build_vignettes = TRUE)
+```
+
+## session
+
+```{r, eval=TRUE}
+utils::sessionInfo()
+```
