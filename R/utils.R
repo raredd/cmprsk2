@@ -1,6 +1,6 @@
 ### utils
 # %||%, %inside%, %ni%, assert_class, islist, is.loaded, nth, parse_formula,
-# pvalr, strata, terms.inner, sterms.inner, trimwsq
+# pvalr, color_pval, strata, terms.inner, sterms.inner, trimwsq
 # 
 # formula s3 methods:
 # is.crr2, is.crr2.default, is.crr2.formula, is.cuminc2, is.cuminc2.default,
@@ -160,10 +160,13 @@ parse_formula <- function(formula, data = NULL) {
   )
 }
 
-## rawr::pvalr
 pvalr <- function(pvals, sig.limit = 0.001, digits = 3L,
          html = FALSE, show.p = FALSE) {
-  stopifnot(sig.limit > 0, sig.limit < 1)
+  ## rawr::pvalr
+  stopifnot(
+    sig.limit > 0,
+    sig.limit < 1
+  )
   show.p <- show.p + 1L
   html   <- html + 1L
   
@@ -181,6 +184,30 @@ pvalr <- function(pvals, sig.limit = 0.001, digits = 3L,
       paste0(c('','p = ')[show.p], roundr(x, nd))
     }
   }, sig.limit)
+}
+
+color_pval <- function(pvals, breaks = c(0, .01, .05, .1, .5, 1),
+                       cols = colorRampPalette(2:1)(length(breaks)),
+                       sig.limit = 0.001, digits = 3L, show.p = FALSE,
+                       format_pval = TRUE) {
+  ## rawr::color_pval
+  if (!is.numeric(pvals))
+    return(pvals)
+  pvn <- pvals
+  
+  stopifnot(
+    length(breaks) == length(cols)
+  )
+  
+  pvals <- if (isTRUE(format_pval))
+    pvalr(pvn, sig.limit, digits, TRUE, show.p)
+  else if (identical(format_pval, FALSE))
+    pvals
+  else format_pval(pvals)
+  
+  pvc <- cols[findInterval(pvn, breaks)]
+  
+  sprintf('<font color=\"%s\">%s</font>', pvc, pvals)
 }
 
 nth <- function(x, p, n = NULL, keep_split = FALSE, repl = '$$$', ...) {

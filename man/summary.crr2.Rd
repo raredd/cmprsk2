@@ -5,7 +5,7 @@
 \title{\code{crr2} summary method}
 \usage{
 \method{summary}{crr2}(object, conf.int = 0.95, ..., html = FALSE,
-  combine_ci = FALSE, digits = 2L, format_p = html)
+  combine_ci = FALSE, digits = 2L, format_p = html, color_p = html)
 }
 \arguments{
 \item{object}{an object of class \code{\link{crr2}}}
@@ -27,6 +27,9 @@ will be returned}
 
 \item{format_p}{logical; if \code{TRUE}, p-values will be formatted;
 otherwise, p-values will only be rounded}
+
+\item{color_p}{logical; if \code{TRUE}, p-values will be formatted and
+colored based on significance level; see \code{cmprsk2:::color_pval}}
 }
 \description{
 \code{crr2} summary method
@@ -38,7 +41,6 @@ summary(crrs)
 
 summary(crrs, conf.int = 0.9, digits = 3L,
         combine_ci = TRUE, format_p = TRUE)
-
 
 library('htmlTable')
 summary(crrs, html = TRUE, combine_ci = TRUE)

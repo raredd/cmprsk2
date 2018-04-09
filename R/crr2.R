@@ -279,6 +279,8 @@ print.crr2 <- function(x, ...) {
 #' @param digits integer value indicating number of digits to print
 #' @param format_p logical; if \code{TRUE}, p-values will be formatted;
 #' otherwise, p-values will only be rounded
+#' @param color_p logical; if \code{TRUE}, p-values will be formatted and
+#' colored based on significance level; see \code{cmprsk2:::color_pval}
 #' 
 #' @seealso
 #' \code{\link{crr2}}; \code{\link{print.crr2}}
@@ -291,14 +293,14 @@ print.crr2 <- function(x, ...) {
 #' summary(crrs, conf.int = 0.9, digits = 3L,
 #'         combine_ci = TRUE, format_p = TRUE)
 #' 
-#' 
 #' library('htmlTable')
 #' summary(crrs, html = TRUE, combine_ci = TRUE)
 #'
 #' @export
 
 summary.crr2 <- function(object, conf.int = 0.95, ..., html = FALSE,
-                         combine_ci = FALSE, digits = 2L, format_p = html) {
+                         combine_ci = FALSE, digits = 2L,
+                         format_p = html, color_p = html) {
   assert_class(object, 'crr2')
   
   rFUN <- if (!html & !format_p & !combine_ci)
@@ -309,8 +311,11 @@ summary.crr2 <- function(object, conf.int = 0.95, ..., html = FALSE,
     o[, -ncol(o)] <- lapply(o[, -ncol(o)], function(x)
       rFUN(x, digits))
     within(o, {
-      p <- if (format_p)
-        pvalr(p, .01, 3L, html, FALSE) else rFUN(p, digits)
+      p <- if (format_p) {
+        if (color_p)
+          color_pval(p)
+        else pvalr(p, .01, 3L, html, FALSE)
+      } else rFUN(p, digits)
       `HR (% CI)` <- sprintf('%s (%s, %s)', HR, LCI, UCI)
     })[, if (combine_ci) c('HR (% CI)', 'p') else -(ncol(o) + 1L)]
   })
@@ -330,8 +335,8 @@ summary.crr2 <- function(object, conf.int = 0.95, ..., html = FALSE,
   }
   
   if (html) {
-    o <- gsub('<', '&lt;', o, fixed = TRUE)
-    o <- gsub('>', '&gt;', o, fixed = TRUE)
+    # o <- gsub('<(?=\\s*\\d)', '&lt;', o, perl = TRUE)
+    # o <- gsub('>(?=\\s*\\d)', '&gt;', o, perl = TRUE)
     
     ## bug in htmlTable v1.9 with class == c('html', ...)
     structure(
