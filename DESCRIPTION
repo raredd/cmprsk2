@@ -1,7 +1,7 @@
 Package: cmprsk2
 Type: Package
 Title: cmprsk2
-Version: 0.0.0.9001
+Version: 0.0.0.9002
 Authors@R: person("Robert", "Redd", email = "rredd@jimmy.harvard.edu",
   role = c("aut", "cre"))
 Author: Robert Redd
@@ -11,7 +11,7 @@ Depends:
     cmprsk,
     survival
 Imports:
-    htmlTable
+    htmlTable (>= 1.0)
 Suggests:
     knitr,
     testthat
