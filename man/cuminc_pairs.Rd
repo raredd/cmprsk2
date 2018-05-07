@@ -46,4 +46,9 @@ ciplot(ci)
 
 cuminc_pairs(ci)$p.value$ltx
 
+
+## unexported functions useful for extracting/formatting
+cmprsk2:::pw_pval(ci, which = 2)
+cmprsk2:::pw_text(ci, which = 'ltx')
+
 }

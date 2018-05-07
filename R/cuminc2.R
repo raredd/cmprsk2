@@ -3,7 +3,7 @@
 # timepoints2
 # 
 # unexported:
-# get_events, gy_pval, gy_text
+# get_events, gy_pval, gy_text, pw_pval, pw_text, name_or_index
 ###
 
 
@@ -371,10 +371,19 @@ split_cuminc <- function(x, wh = c('event', 'group'), ws_split = 'last') {
 #' 
 #' cuminc_pairs(ci)$p.value$ltx
 #' 
+#' 
+#' ## unexported functions useful for extracting/formatting
+#' cmprsk2:::pw_pval(ci, which = 2)
+#' cmprsk2:::pw_text(ci, which = 'ltx')
+#' 
 #' @export
 
 cuminc_pairs <- function(object, data = NULL, rho = 0, cencode = NULL,
                          method = p.adjust.methods, digits = 3L) {
+  stopifnot(
+    inherits(object, c('cuminc2', 'formula'))
+  )
+  
   pwgray <- function(i, j, k) {
     force(k)
     data <- data[data[, 'group'] %in% c(unq[i], unq[j]), ]
@@ -382,12 +391,12 @@ cuminc_pairs <- function(object, data = NULL, rho = 0, cencode = NULL,
     form <- as.formula(form)
     ci <- cuminc2(form, data, rho, cencode)
     
-    tryCatch(gy_pval(ci, TRUE)[k, 'stat'],
-             error = function(e) {
-               if (grepl('subscript', e$message))
-                 NA
-               else stop(e)
-             })
+    tryCatch(
+      gy_pval(ci, TRUE)[k, 'stat'],
+      error = function(e) {
+        if (grepl('subscript', e$message))
+          NA else stop(e)
+      })
   }
   
   ## stats::pairwise.table with modifications
@@ -440,7 +449,71 @@ cuminc_pairs <- function(object, data = NULL, rho = 0, cencode = NULL,
   })
   names(chisq) <- names(p.value) <- crs
   
-  list(n = nn, chi.sq = chisq, p.value = p.value)
+  structure(
+    list(n = nn, chi.sq = chisq, p.value = p.value),
+    class = 'cuminc_pairs'
+  )
+}
+
+pw_pval <- function(object, details = FALSE, data = NULL, ...,
+                    method = 'none', which = NULL) {
+  object <- if (inherits(object, 'cuminc_pairs'))
+    object
+  else if (inherits(object, 'cuminc2')) {
+    cuminc_pairs(object, ..., digits = 10L)
+  } else if (inherits(object, c('formula', 'call'))) {
+    object <- eval(
+      substitute(cuminc2(form, data = data, ...), list(form = object))
+    )
+    cuminc_pairs(object)
+  } else stop('pw_pval - Invalid object', call. = FALSE)
+  
+  stopifnot(
+    inherits(object, 'cuminc_pairs'),
+    !is.null(which)
+  )
+  
+  m <- object$p.value
+  m <- m[[name_or_index(which, names(m))]]
+  p <- m[lower.tri(m)]
+  p <- p.adjust(p, method = method)
+  n <- sprintf('%s vs %s', colnames(m)[col(m)[lower.tri(m, FALSE)]],
+               rownames(m)[row(m)[lower.tri(m, FALSE)]])
+  
+  setNames(p, n)
+}
+
+pw_text <- function(formula, data, ..., details = TRUE, pFUN = NULL,
+                    method = 'none', which = NULL) {
+  pFUN <- if (is.null(pFUN) || isTRUE(pFUN))
+    function(x) pvalr(x, show.p = TRUE)
+  else if (identical(pFUN, FALSE))
+    identity
+  else {
+    stopifnot(is.function(pFUN))
+    pFUN
+  }
+  
+  obj <- pw_pval(object = formula, data = data, method = method,
+                 which = which, ...)
+  
+  sprintf('%s: %s', names(obj), pFUN(obj))
+}
+
+name_or_index <- function(x, y = NULL) {
+  ## return integer vector where x occurs in y
+  ## cmprsk2:::name_or_index(c('1', '3', 'e'))
+  ## cmprsk2:::name_or_index(c('a', 'c', 'e'), letters)
+  ## table is given priority over integer, eg, idx = 27 instead of 4
+  ## cmprsk2:::name_or_index(c('a', '4', 'e'), c(letters, '4'))
+  suppressWarnings(
+    ix <- as.integer(x)
+  )
+  
+  if (!is.null(y)) {
+    iy <- match(x, y)
+    replace(iy, is.na(iy), ix[is.na(iy)])
+  } else ix
 }
 
 #' \code{timepoints} formatter
