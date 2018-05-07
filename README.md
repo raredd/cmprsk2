@@ -4,7 +4,7 @@ Extensions for the [cmprsk](https://cran.r-project.org/web/packages/cmprsk/index
 
 See [intro vignette](vignettes/cmprsk2.Rmd)
 
-To install::
+To install:
 
 ```r
 devtools::install_github('raredd/cmprsk2', build_vignettes = TRUE)
