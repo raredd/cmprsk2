@@ -98,7 +98,7 @@ is.loaded <- function(package) {
   any(grepl(sprintf('package:%s', package), search()))
 }
 
-parse_formula <- function(formula, data = NULL) {
+parse_formula <- function(formula, data = NULL, name = NULL) {
   if (!(is.crr2(formula) | is.cuminc2(formula)))
     stop(
       'Invalid formula - see ?crr2 or ?cuminc2 for deatails'
@@ -124,8 +124,9 @@ parse_formula <- function(formula, data = NULL) {
     NULL else failcode
   
   if (!is.null(data)) {
-    dname <- deparse(substitute(data))
+    dname <- name %||% deparse(substitute(data))
     vars <- c(lhs, rhs, strata)
+    
     if (length(vars <- vars[vars %ni% names(data)]))
       stop(
         sprintf('%s not found in %s',

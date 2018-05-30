@@ -68,15 +68,15 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
       call. = FALSE
     )
   
-  form  <- parse_formula(formula, data)
-  fname <- as.formula(deparse(formula))
-  call  <- match.call()
-  call$formula <- fname
-  
   name <- substitute(data)
   Name <- if (length(name) > 1L)
     as.list(name)[[2L]] else name
   na.action <- match.fun(na.action)
+  
+  form  <- parse_formula(formula, data, as.character(name))
+  fname <- as.formula(deparse(formula))
+  call  <- match.call()
+  call$formula <- fname
   
   subset <- subset %||% rep_len(TRUE, nrow(data))
   data   <- droplevels(data[subset, ])
