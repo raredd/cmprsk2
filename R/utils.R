@@ -84,7 +84,8 @@ is.cuminc2.formula <- function(x) {
   x <- paste(x, collapse = '')
   
   ## status(0) == 1 equality is optional
-  grepl('Surv\\([^(]+\\([^(]+\\)\\s*(?:(==|%in%)[^)]+)?\\)', x)
+  grepl('Surv\\([^(]+\\([^(]+\\)\\s*(?:(==|%in%)[^)]+)?\\)', x) &
+    grepl('~', x)
 }
 
 islist <- function(x) {
