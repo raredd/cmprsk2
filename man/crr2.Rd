@@ -23,7 +23,12 @@ interest (i.e., one of the unique values of the \code{status} variable);
 if given, no other \code{crr} models are returned}
 
 \item{cox}{logical; if \code{TRUE}, a \code{\link{coxph}} model is fit
-using the event of interest with all other events treated as censored}
+using the event of interest with all other events treated as censored;
+
+alternatively, a formula to be passed to \code{\link{coxph}}, typically
+with the same RHS as \code{formula}, since this may be more desirable than
+setting \code{cox = TRUE}; note that this model may be fit to a different
+set of data depending on the missingness in variables of both models}
 
 \item{variance}{logical; if \code{FALSE}, suppresses computation of the
 variance estimate and residuals}
@@ -32,7 +37,7 @@ variance estimate and residuals}
 \code{\link[cmprsk]{crr}}; these will be guessed from \code{formula} but
 may be overridden}
 
-\item{gtol, maxiter, init}{additional arguments passed to
+\item{gtol, maxiter, init}{(optional) additional arguments passed to
 \code{\link[cmprsk]{crr}}}
 }
 \value{
@@ -72,7 +77,8 @@ crr2(form, tp[tp$age > 55, ], cox = TRUE, variance = FALSE, which = 'death')
 
 
 ## use the summary method to compare models easily
-crrs <- crr2(form, transplant, which = 'ltx', cox = TRUE)
+crrs <- crr2(form, data = transplant,
+             cox = Surv(futime, event == 'death') ~ age + sex + abo)
 summary(crrs)
 
 library('htmlTable')

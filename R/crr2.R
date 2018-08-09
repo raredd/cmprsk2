@@ -21,13 +21,18 @@
 #' interest (i.e., one of the unique values of the \code{status} variable);
 #' if given, no other \code{crr} models are returned
 #' @param cox logical; if \code{TRUE}, a \code{\link{coxph}} model is fit
-#' using the event of interest with all other events treated as censored
+#' using the event of interest with all other events treated as censored;
+#' 
+#' alternatively, a formula to be passed to \code{\link{coxph}}, typically
+#' with the same RHS as \code{formula}, since this may be more desirable than
+#' setting \code{cox = TRUE}; note that this model may be fit to a different
+#' set of data depending on the missingness in variables of both models
 #' @param variance logical; if \code{FALSE}, suppresses computation of the
 #' variance estimate and residuals
 #' @param cengroup,failcode,cencode additional arguments passed to
 #' \code{\link[cmprsk]{crr}}; these will be guessed from \code{formula} but
 #' may be overridden
-#' @param gtol,maxiter,init additional arguments passed to
+#' @param gtol,maxiter,init (optional) additional arguments passed to
 #' \code{\link[cmprsk]{crr}}
 #' 
 #' @return
@@ -69,7 +74,8 @@
 #' 
 #' 
 #' ## use the summary method to compare models easily
-#' crrs <- crr2(form, transplant, which = 'ltx', cox = TRUE)
+#' crrs <- crr2(form, data = transplant,
+#'              cox = Surv(futime, event == 'death') ~ age + sex + abo)
 #' summary(crrs)
 #' 
 #' library('htmlTable')
@@ -160,7 +166,8 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   )
   
   cengroup <- cengroup %||% rep_len(1L, nrow(data))
-
+  
+  odata <- data
   idx <- !complete.cases(data[, c(lhs, rhs)])
   if (any(!!(n <- as.integer(sum(idx))))) {
     message(n, ' observations removed due to missingness', domain = NA)
@@ -232,16 +239,18 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   attr(crrs, 'model.frame')  <- mf
   attr(crrs, 'model.matrix') <- mm
 
-  if (!cox)
+  if (identical(cox, FALSE))
     return(crrs)
 
   ## coxph model with any competing event vs censored
-  formula <- sprintf('Surv(%s, %s %%in%% c(%s)) ~ %s',
-                     lhs[1L], lhs[2L], toString(shQuote(crisks)),
-                     paste(deparse(formula[[3L]]), collapse = ''))
+  formula <- if (isTRUE(cox)) {
+    sprintf('Surv(%s, %s %%in%% c(%s)) ~ %s',
+            lhs[1L], lhs[2L], toString(shQuote(crisks)),
+            paste(deparse(formula[[3L]]), collapse = ''))
+  } else cox
   formula <- as.formula(formula)
   
-  cph <- substitute(coxph(formula, data), list(formula = formula))
+  cph <- substitute(coxph(formula, odata), list(formula = formula))
   cph <- eval(cph)
   cph$call$data <- name
   cph <- list(coxph = cph)
