@@ -255,8 +255,8 @@ strata <- function(formula) {
     strata else NULL
 }
 
-## rawr::tcol
 tcol <- function(colors, trans = NULL, alpha = NULL) {
+  ## rawr::tcol
   trans <- trans %||% 255L
   stopifnot(
     trans %inside% c(0L, 255L) | is.na(trans)

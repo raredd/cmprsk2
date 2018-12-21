@@ -119,9 +119,11 @@ BIC.crr <- function(object, ...) {
 #' @export
 logLik.crr <- function(object, ...) {
   val <- object[['loglik']]
-  attr(val, 'df') <- length(object[['coef']])
-  class(val) <- 'logLik'
-  val
+  
+  structure(
+    val, class = 'logLik',
+    df = length(object[['coef']])
+  )
 }
 
 #' @rdname crrfit
@@ -130,12 +132,15 @@ deviance.crr <- function(object, ...) {
   cat('Call:\n')
   dput(object$call)
   cat('\n')
+  
   x  <- summary(object)
   dv <- unname(x$logtest[['test']])
   df <- x$logtest[['df']]
   pv <- pchisq(dv, df, lower.tail = FALSE)
+  
   cat('Deviance =', signif(dv, 3L), 'on', df, 'df,',
       format.pval(pv, show.p = TRUE), '\n\n')
+  
   invisible(c(chi.sq = dv, df = df, p.value = pv))
 }
 
@@ -166,6 +171,7 @@ terms.crr2 <- function(x, ...) {
     message('\'terms\' is not available for a \'crr\' object - try \'?crr2\'')
     return(invisible(NULL))
   }
+  
   terms(attr(x, 'model.frame'))
 }
 
@@ -363,45 +369,45 @@ crrwald.test <- function(object, terms) {
   res
 }
 
-## aod::wald.test
 wald.test <- function (Sigma, b, Terms = NULL, L = NULL, H0 = NULL,
                        df = NULL, verbose = FALSE) {
+  ## aod::wald.test
   if (is.null(Terms) & is.null(L))
-    stop("One of the arguments Terms or L must be used.")
+    stop('One of the arguments Terms or L must be used.')
   if (!is.null(Terms) & !is.null(L)) 
-    stop("Only one of the arguments Terms or L must be used.")
+    stop('Only one of the arguments Terms or L must be used.')
   
-  if (is.null(Terms)) {
-    w <- nrow(L)
+  w <- if (is.null(Terms)) {
     Terms <- seq(length(b))[colSums(L) > 0]
-  } else w <- length(Terms)
+    nrow(L)
+  } else length(Terms)
   if (is.null(H0))
-    H0 <- rep(0, w)
+    H0 <- rep_len(0, w)
   
   if (w != length(H0))
-    stop("Vectors of tested coefficients and of null hypothesis have different lengths\n")
+    stop('Vectors of tested coefficients and of null hypothesis have different lengths\n')
   if (is.null(L)) {
-    L <- matrix(rep(0, length(b) * w), ncol = length(b))
-    for (i in 1:w)
+    L <- matrix(rep_len(0, length(b) * w), ncol = length(b))
+    for (i in seq.int(w))
       L[i, Terms[i]] <- 1
   }
-  dimnames(L) <- list(paste0('L', as.character(seq(NROW(L)))), names(b))
+  dimnames(L) <- list(paste0('L', as.character(seq.int(NROW(L)))), names(b))
   
   f <- L %*% b
   V <- Sigma
   mat <- qr.solve(L %*% V %*% t(L))
   stat <- t(f - H0) %*% mat %*% (f - H0)
-  p <- 1 - pchisq(stat, df = w)
+  p <- pchisq(stat, df = w, lower.tail = FALSE)
   
-  if (is.null(df)) 
-    res <- list(chi2 = c(chi2 = stat, df = w, P = p))
+  res <- if (is.null(df))
+    list(chi2 = c(chi2 = stat, df = w, P = p))
   else {
-    fstat <- stat/nrow(L)
+    fstat <- stat / nrow(L)
     df1 <- nrow(L)
     df2 <- df
-    res <- list(chi2 = c(chi2 = stat, df = w, P = p),
-                Ftest = c(Fstat = fstat, df1 = df1, df2 = df2,
-                          P = 1 - pf(fstat, df1, df2)))
+    list(chi2 = c(chi2 = stat, df = w, P = p),
+         Ftest = c(Fstat = fstat, df1 = df1, df2 = df2,
+                   P = pf(fstat, df1, df2, lower.tail = FALSE)))
   }
   
   structure(

@@ -458,6 +458,7 @@ tidy_ <- function(x, conf.int = 0.95, ...) {
   ## clean up crr or coxph objects
   # tidy_(coxph(Surv(time, status) ~ rx, colon))
   assert_class(x, c('crr', 'coxph'))
+  
   s <- summary(x, conf.int = conf.int, ...)
   
   setNames(

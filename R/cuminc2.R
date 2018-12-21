@@ -574,19 +574,16 @@ timepoints2 <- function(w, times, digits = 3L, sd = FALSE,
   res <- tp$est
   
   fmt <- if (ci)
-    sprintf('%%.%sf [%%.%sf - %%.%sf]',
-            digits, digits, digits)
-  else {
-    sprintf('%%.%sf %s %%.%sf',
-            digits, if (html) '&pm;' else '+/-', digits)
-  }
+    sprintf('%%.%sf [%%.%sf - %%.%sf]', digits, digits, digits)
+  else sprintf('%%.%sf %s %%.%sf', digits, if (html) '&pm;' else '+/-', digits)
   
   if (ci) {
+    z <- qnorm(1 - 0.05 / 2)
     res[] <- mapply(function(x, y, z)
       sprintf(fmt, x, y, z),
       tp$est,
-      pmax(tp$est - 1.96 * sqrt(tp$var), 0),
-      tp$est + 1.96 * sqrt(tp$var))
+      pmax(tp$est - z * sqrt(tp$var), 0),
+      tp$est + z * sqrt(tp$var))
   } else {
     res[] <- mapply(function(x, y)
       sprintf(fmt, x, y), tp$est, sqrt(tp$var))
