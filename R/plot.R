@@ -435,6 +435,12 @@ ciplot_by <- function(rhs = '1', event, data, by = NULL, single = TRUE,
   cencode <- cencode %||%
     grep('(?i)0|censor', data[, event], value = TRUE)[1L]
   cencode <- as.character(cencode)
+  if (is.na(cencode))
+    stop(
+      '\'cencode\' not guessed correctly in ', event,
+      ' variable\n  options are ', toString(shQuote(unique(data[, event]))),
+      '\n  use \'cencode\' argument to specify censoring indicator'
+    )
   
   form  <- if (!is.null(time))
     sprintf('Surv(%s, %s(%s)) ~ %s', time, event, cencode, rhs) else
