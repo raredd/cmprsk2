@@ -4,8 +4,9 @@
 \alias{summary.crr2}
 \title{\code{crr2} summary method}
 \usage{
-\method{summary}{crr2}(object, conf.int = 0.95, ..., html = FALSE,
-  combine_ci = FALSE, digits = 2L, format_p = html, color_p = html)
+\method{summary}{crr2}(object, conf.int = 0.95, ..., n = FALSE,
+  html = FALSE, combine_ci = FALSE, digits = 2L, format_p = html,
+  color_p = html)
 }
 \arguments{
 \item{object}{an object of class \code{\link{crr2}}}
@@ -15,6 +16,9 @@
 \item{...}{additional arguments affecting the summary produced (passed
 to \code{\link[cmprsk]{summary.crr}} or
 \code{\link[survival]{summary.coxph}} depending on the object)}
+
+\item{n}{logical; if \code{TRUE}, the sample size and number of events
+for each variable are added to the summary}
 
 \item{html}{logical; if \code{TRUE}, an \code{\link{htmlTable}} will be
 returned; otherwise, a matrix}
@@ -43,7 +47,7 @@ summary(crrs, conf.int = 0.9, digits = 3L,
         combine_ci = TRUE, format_p = TRUE)
 
 library('htmlTable')
-summary(crrs, html = TRUE, combine_ci = TRUE)
+summary(crrs, html = TRUE, combine_ci = TRUE, n = TRUE)
 
 }
 \seealso{

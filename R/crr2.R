@@ -189,7 +189,7 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   crrs <- lapply(crisks, function(x) {
     ftime   <- lhs[1L]
     fstatus <- lhs[2L]
-
+    
     ## substitute to get a more helpful call -- can run crr directly
     call <- substitute(
       crr(data[, ftime], data[, fstatus],
@@ -220,8 +220,12 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
     fit$n.missing <- n
     
     ## add model.frame, model.matrix for use in other methods
-    attr(fit, 'model.frame')  <- mf
-    attr(fit, 'model.matrix') <- mm
+    fit <- structure(
+      fit,
+      model.frame = mf,
+      model.matrix = mm,
+      failcode = +(data[, fstatus] %in% x)
+    )
 
     structure(
       fit,
@@ -231,13 +235,11 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   
   crrs <- structure(
     crrs, .Names = paste('CRR:', crisks),
-    class = c('crr2', 'crr')
+    class = c('crr2', 'crr'),
+    ## can probably get rid of this?
+    ## add model.frame, model.matrix for use in other methods
+    model.frame = mf, model.matrix = mm
   )
-  
-  ## can probably get rid of this?
-  ## add model.frame, model.matrix for use in other methods
-  attr(crrs, 'model.frame')  <- mf
-  attr(crrs, 'model.matrix') <- mm
 
   if (identical(cox, FALSE))
     return(crrs)
@@ -285,6 +287,8 @@ print.crr2 <- function(x, ...) {
 #' @param ... additional arguments affecting the summary produced (passed
 #' to \code{\link[cmprsk]{summary.crr}} or
 #' \code{\link[survival]{summary.coxph}} depending on the object)
+#' @param n logical; if \code{TRUE}, the sample size and number of events
+#' for each variable are added to the summary
 #' @param html logical; if \code{TRUE}, an \code{\link{htmlTable}} will be
 #' returned; otherwise, a matrix
 #' @param combine_ci logical; if \code{FALSE}, upper and lower confidence
@@ -308,31 +312,63 @@ print.crr2 <- function(x, ...) {
 #'         combine_ci = TRUE, format_p = TRUE)
 #' 
 #' library('htmlTable')
-#' summary(crrs, html = TRUE, combine_ci = TRUE)
+#' summary(crrs, html = TRUE, combine_ci = TRUE, n = TRUE)
 #'
 #' @export
 
-summary.crr2 <- function(object, conf.int = 0.95, ..., html = FALSE,
-                         combine_ci = FALSE, digits = 2L,
+summary.crr2 <- function(object, conf.int = 0.95, ..., n = FALSE,
+                         html = FALSE, combine_ci = FALSE, digits = 2L,
                          format_p = html, color_p = html) {
   assert_class(object, 'crr2')
+  oo <- object
   
   rFUN <- if (!html & !format_p & !combine_ci)
     round else roundr
   
+  if (n) {
+    ns <- lapply(object, function(x) {
+      y <- attr(x, 'failcode')
+      x <- attr(x, 'model.frame')
+      
+      x <- lapply(seq_along(x), function(ii) {
+        xx <- x[[ii]]
+        if (is.factor(xx))
+          cbind(table(xx)[-1L], table(xx[y == 1L])[-1L])
+        else cbind(length(sort(xx)), length(sort(xx[y == 1L])))
+      })
+      do.call('rbind', x)
+    })
+  }
+  
   object <- lapply(object, tidy_, conf.int = conf.int, ...)
-  object <- lapply(object, function(o) {
+  object <- lapply(seq_along(object), function(ii) {
+    o <- object[[ii]]
     o[, -ncol(o)] <- lapply(o[, -ncol(o)], function(x)
       rFUN(x, digits))
-    within(o, {
+    if (n)
+      o <- `rownames<-`(
+        cbind(`colnames<-`(ns[[ii]], c('N', 'Events')), o),
+        rownames(o)
+      )
+    o <- within(o, {
       p <- if (format_p) {
         if (color_p)
           color_pval(p)
-        else pvalr(p, .01, 3L, html, FALSE)
+        else pvalr(p, html = html)
       } else rFUN(p, digits)
+      # if (n)
+      #   `N (Events)` <- sprintf('%s (%s)', N, Events)
       `HR (% CI)` <- sprintf('%s (%s, %s)', HR, LCI, UCI)
-    })[, if (combine_ci) c('HR (% CI)', 'p') else -(ncol(o) + 1L)]
+    })
+    
+    nt <- if (html && n && ii > 1L)
+      'Events' else if (n) c('N', 'Events') else NULL
+    ci <- if (combine_ci)
+      'HR (% CI)' else c('HR', 'LCI', 'UCI')
+    
+    o[, c(nt, ci, 'p')]
   })
+  names(object) <- names(oo)
   
   o <- do.call('cbind', object)
   o <- as.matrix(o)
@@ -354,17 +390,20 @@ summary.crr2 <- function(object, conf.int = 0.95, ..., html = FALSE,
     
     ## bug in htmlTable v1.9 with class == c('html', ...)
     structure(
-      htmlTable(o, ..., cgroup = names(object), n.cgroup = lengths(object),
-                css.cell = 'padding: 0px 5px 0px; white-space: nowrap;'),
-      class = 'htmlTable'
+      htmlTable(
+        o, ..., cgroup = c(if (n) '' else NULL, names(object)),
+        n.cgroup = if (n)
+          c(1L, lengths(object) - (seq_along(object) == 1L)) else lengths(object),
+        css.cell = 'padding: 0px 5px 0px; white-space: nowrap;'
+      ), class = 'htmlTable'
     )
   } else {
-    div <- ifelse(combine_ci, 2L, 4L)
+    div <- ifelse(combine_ci, 2L, 4L) + n * 2
     o <- lapply(seq.int(ncol(o) / div), function(x) {
       x <- x * div
       o[, (x - div + 1L):x]
     })
-    setNames(o, names(object))
+    setNames(o, names(oo))
   }
 }
 
