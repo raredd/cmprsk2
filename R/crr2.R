@@ -255,6 +255,11 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   cph <- substitute(coxph(formula, odata), list(formula = formula))
   cph <- eval(cph)
   cph$call$data <- name
+  cph <- structure(
+    cph, failcode = unname(cph$y[, 2L]),
+    model.frame = model.frame(cph)[, -1L, drop = FALSE],
+    model.matrix = model.matrix(cph)
+  )
   cph <- list(coxph = cph)
 
   structure(
