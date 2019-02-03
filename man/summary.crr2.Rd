@@ -4,18 +4,15 @@
 \alias{summary.crr2}
 \title{\code{crr2} summary method}
 \usage{
-\method{summary}{crr2}(object, conf.int = 0.95, ..., n = FALSE,
+\method{summary}{crr2}(object, conf.int = 0.95, n = FALSE,
   ref = FALSE, html = FALSE, combine_ci = FALSE, digits = 2L,
-  format_p = html, color_p = html, format_n = n, htmlArgs = list())
+  format_p = html, color_p = html, format_n = n, htmlArgs = list(),
+  ...)
 }
 \arguments{
 \item{object}{an object of class \code{\link{crr2}}}
 
 \item{conf.int}{level of confidence}
-
-\item{...}{additional arguments affecting the summary produced (passed
-to \code{\link[cmprsk]{summary.crr}} or
-\code{\link[survival]{summary.coxph}} depending on the object)}
 
 \item{n}{logical; if \code{TRUE}, the sample size and number of events
 for each variable are added to the summary}
@@ -45,6 +42,8 @@ are shown in each row}
 \item{htmlArgs}{for \code{html = TRUE}, a \emph{named} list of arguments
 passed to \code{\link[htmlTable]{htmlTable}} for additional formatting or
 to override defaults}
+
+\item{...}{ignored}
 }
 \description{
 \code{crr2} summary method

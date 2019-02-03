@@ -319,9 +319,6 @@ print.crr2 <- function(x, ...) {
 #'
 #' @param object an object of class \code{\link{crr2}}
 #' @param conf.int level of confidence
-#' @param ... additional arguments affecting the summary produced (passed
-#' to \code{\link[cmprsk]{summary.crr}} or
-#' \code{\link[survival]{summary.coxph}} depending on the object)
 #' @param n logical; if \code{TRUE}, the sample size and number of events
 #' for each variable are added to the summary
 #' @param ref logical; if \code{TRUE}, rows with reference categories are
@@ -342,6 +339,7 @@ print.crr2 <- function(x, ...) {
 #' @param htmlArgs for \code{html = TRUE}, a \emph{named} list of arguments
 #' passed to \code{\link[htmlTable]{htmlTable}} for additional formatting or
 #' to override defaults
+#' @param ... ignored
 #' 
 #' @seealso
 #' \code{\link{crr2}}; \code{\link{print.crr2}}
@@ -367,10 +365,10 @@ print.crr2 <- function(x, ...) {
 #'
 #' @export
 
-summary.crr2 <- function(object, conf.int = 0.95, ..., n = FALSE, ref = FALSE,
+summary.crr2 <- function(object, conf.int = 0.95, n = FALSE, ref = FALSE,
                          html = FALSE, combine_ci = FALSE, digits = 2L,
                          format_p = html, color_p = html, format_n = n,
-                         htmlArgs = list()) {
+                         htmlArgs = list(), ...) {
   if (!any(class(object) %in% 'crr2_list'))
     return(summary(dropcrr2(object)))
   
@@ -597,7 +595,7 @@ insert <- function(x, where = NULL, what = paste('Reference', seq_along(wh))) {
   x
 }
 
-tidy_ <- function(x, conf.int = 0.95, ref = FALSE, ...) {
+tidy_ <- function(x, conf.int = 0.95, ref = FALSE) {
   ## clean up crr or coxph objects
   # tidy_(coxph(Surv(time, status) ~ rx, colon))
   ns <- if (ref && !is.null(ns <- attr(x, 'ns'))) {
@@ -610,7 +608,7 @@ tidy_ <- function(x, conf.int = 0.95, ref = FALSE, ...) {
     class(x) <- c('crr', class(x))
   assert_class(x, c('crr', 'coxph'))
   
-  s <- summary(x, conf.int = conf.int, ...)
+  s <- summary(x, conf.int = conf.int)
   s <- data.frame(
     s$conf.int[, -2L, drop = FALSE],
     s$coef[,  -(1:4), drop = FALSE]
