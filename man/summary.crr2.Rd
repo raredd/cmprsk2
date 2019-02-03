@@ -5,8 +5,8 @@
 \title{\code{crr2} summary method}
 \usage{
 \method{summary}{crr2}(object, conf.int = 0.95, ..., n = FALSE,
-  html = FALSE, combine_ci = FALSE, digits = 2L, format_p = html,
-  color_p = html)
+  ref = FALSE, html = FALSE, combine_ci = FALSE, digits = 2L,
+  format_p = html, color_p = html, format_n = n, htmlArgs = list())
 }
 \arguments{
 \item{object}{an object of class \code{\link{crr2}}}
@@ -19,6 +19,9 @@ to \code{\link[cmprsk]{summary.crr}} or
 
 \item{n}{logical; if \code{TRUE}, the sample size and number of events
 for each variable are added to the summary}
+
+\item{ref}{logical; if \code{TRUE}, rows with reference categories are
+added to results}
 
 \item{html}{logical; if \code{TRUE}, an \code{\link{htmlTable}} will be
 returned; otherwise, a matrix}
@@ -34,6 +37,14 @@ otherwise, p-values will only be rounded}
 
 \item{color_p}{logical; if \code{TRUE}, p-values will be formatted and
 colored based on significance level; see \code{cmprsk2:::color_pval}}
+
+\item{format_n}{logical; if \code{TRUE}, for \code{html = TRUE} the total
+n is added for each total/events column and percentages of total and events
+are shown in each row}
+
+\item{htmlArgs}{for \code{html = TRUE}, a \emph{named} list of arguments
+passed to \code{\link[htmlTable]{htmlTable}} for additional formatting or
+to override defaults}
 }
 \description{
 \code{crr2} summary method
@@ -48,6 +59,14 @@ summary(crrs, conf.int = 0.9, digits = 3L,
 
 library('htmlTable')
 summary(crrs, html = TRUE, combine_ci = TRUE, n = TRUE)
+
+summary(
+  crrs, html = TRUE, combine_ci = TRUE, n = TRUE,
+  htmlArgs = list(
+    caption = 'CRR models.', rgroup = c('Age', 'Sex', 'Blood type'),
+    rnames = c('+1 year change', 'Female', 'B', 'AB', 'O')
+  )
+)
 
 }
 \seealso{

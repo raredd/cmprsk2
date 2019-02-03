@@ -2,7 +2,7 @@
 # crr2, print.crr2, summary.crr2, finegray2
 # 
 # unexported:
-# tidy_
+# dropcrr2, insert, tidy_
 ###
 
 
@@ -79,7 +79,7 @@
 #' summary(crrs)
 #' 
 #' library('htmlTable')
-#' summary(crrs, html = TRUE)
+#' summary(crrs, html = TRUE, n = TRUE)
 #' 
 #' 
 #' ## use the call from a crr2 object to run cmprsk::crr
@@ -151,11 +151,11 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
       gsub('\\n\\s{2,}', ' ',
            sprintf('Only %s found in in %s[, %s]\n Typically, censoring,
                    event of interest, and >=1 competing event are used',
-              toString(shQuote(wh)), deparse(name), shQuote(form[[1L]][2L]))
+                   toString(shQuote(wh)), deparse(name), shQuote(form[[1L]][2L]))
       ),
       call. = FALSE
-    )
-
+      )
+  
   ## all events of interest minus censored
   crisks <- if (!is.null(which))
     which else c(failcode, setdiff(status, c(cencode, failcode)))
@@ -204,7 +204,7 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
     call$cengroup <- if (length(un <- unique(cengroup)) == 1L)
       substitute(rep(un, nrow(data)), list(un = un, data = name))
     else call$cengroup
-
+    
     fit <- substitute(
       crr(data[, ftime], data[, fstatus], cov1 = mm,
           cencode = cencode, failcode = x, variance = variance,
@@ -215,35 +215,47 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
     )
     fit <- eval(fit)
     fit$call <- call
-
+    
     fit$nuftime   <- c(table(data[data[, fstatus] %in% x, ftime]))
     fit$n.missing <- n
     
+    ## get n for reference group and events per model term
+    fc <- +(data[, fstatus] %in% x)
+    ns <- lapply(seq_along(mf), function(ii) {
+      x <- mf[, ii]
+      x <- if (is.factor(x) || is.character(x)) {
+        x <- cbind(table(x), table(x[fc == 1L]))
+        rownames(x)[1L] <- sprintf('Reference: %s', rownames(x)[1L])
+        x
+      } else {
+        x <- cbind(length(x), sum(fc))
+        rownames(x) <- colnames(mf)[ii]
+        x
+      }
+    })
+    names(ns) <- colnames(mf)
+    
     ## add model.frame, model.matrix for use in other methods
     fit <- structure(
-      fit,
-      model.frame = mf,
-      model.matrix = mm,
-      failcode = +(data[, fstatus] %in% x)
+      fit, model.frame = mf, model.matrix = mm, failcode = fc, ns = ns,
+      has_reference = sapply(ns, function(x)
+        any(grepl('^Reference', rownames(x))))
     )
-
-    structure(
-      fit,
-      class = c('crr', 'crr2')
-    )
+    
+    structure(fit, class = c('crr2', 'crr'))
   })
   
   crrs <- structure(
     crrs, .Names = paste('CRR:', crisks),
-    class = c('crr2', 'crr'),
+    class = c('crr2', 'crr', 'crr2_list'),
     ## can probably get rid of this?
     ## add model.frame, model.matrix for use in other methods
     model.frame = mf, model.matrix = mm
   )
-
+  
   if (identical(cox, FALSE))
     return(crrs)
-
+  
   ## coxph model with any competing event vs censored
   formula <- if (isTRUE(cox)) {
     sprintf('Surv(%s, %s %%in%% c(%s)) ~ %s',
@@ -252,19 +264,36 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   } else cox
   formula <- as.formula(formula)
   
-  cph <- substitute(coxph(formula, odata), list(formula = formula))
-  cph <- eval(cph)
+  cph <- substitute(coxph(formula, data), list(formula = formula))
+  cph <- eval(cph, data)
   cph$call$data <- name
+  
+  fc <- unname(cph$y[, 2L])
+  mf <- model.frame(cph, data = data)[, -1L, drop = FALSE]
+  ns <- lapply(seq_along(mf), function(ii) {
+    x <- mf[, ii]
+    x <- if (is.factor(x) || is.character(x)) {
+      x <- cbind(table(x), table(x[fc == 1L]))
+      rownames(x)[1L] <- sprintf('Reference: %s', rownames(x)[1L])
+      x
+    } else {
+      x <- cbind(length(x), sum(fc))
+      rownames(x) <- colnames(mf)[ii]
+      x
+    }
+  })
+  names(ns) <- colnames(mf)
+  
   cph <- structure(
-    cph, failcode = unname(cph$y[, 2L]),
-    model.frame = model.frame(cph)[, -1L, drop = FALSE],
-    model.matrix = model.matrix(cph)
+    cph, failcode = fc, model.frame = mf,
+    model.matrix = model.matrix(cph), ns = ns,
+    has_reference = sapply(ns, function(x)
+      any(grepl('^Reference', rownames(x))))
   )
-  cph <- list(coxph = cph)
-
+  
   structure(
-    c(cph, crrs),
-    class = c('crr2', 'crr')
+    c(list('Cox PH' = cph), crrs),
+    class = c('crr2', 'crr', 'crr2_list')
   )
 }
 
@@ -279,9 +308,10 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
 #' @export
 
 print.crr2 <- function(x, ...) {
-  if (inherits(x, 'crr2')) {
+  if (any(class(x) %in% 'crr2_list')) {
     print(unclass(x)[seq_along(x)])
-  } else print(x)
+  } else print(dropcrr2(x))
+  
   invisible(x)
 }
 
@@ -294,6 +324,8 @@ print.crr2 <- function(x, ...) {
 #' \code{\link[survival]{summary.coxph}} depending on the object)
 #' @param n logical; if \code{TRUE}, the sample size and number of events
 #' for each variable are added to the summary
+#' @param ref logical; if \code{TRUE}, rows with reference categories are
+#' added to results
 #' @param html logical; if \code{TRUE}, an \code{\link{htmlTable}} will be
 #' returned; otherwise, a matrix
 #' @param combine_ci logical; if \code{FALSE}, upper and lower confidence
@@ -304,6 +336,12 @@ print.crr2 <- function(x, ...) {
 #' otherwise, p-values will only be rounded
 #' @param color_p logical; if \code{TRUE}, p-values will be formatted and
 #' colored based on significance level; see \code{cmprsk2:::color_pval}
+#' @param format_n logical; if \code{TRUE}, for \code{html = TRUE} the total
+#' n is added for each total/events column and percentages of total and events
+#' are shown in each row
+#' @param htmlArgs for \code{html = TRUE}, a \emph{named} list of arguments
+#' passed to \code{\link[htmlTable]{htmlTable}} for additional formatting or
+#' to override defaults
 #' 
 #' @seealso
 #' \code{\link{crr2}}; \code{\link{print.crr2}}
@@ -318,56 +356,79 @@ print.crr2 <- function(x, ...) {
 #' 
 #' library('htmlTable')
 #' summary(crrs, html = TRUE, combine_ci = TRUE, n = TRUE)
+#' 
+#' summary(
+#'   crrs, html = TRUE, combine_ci = TRUE, n = TRUE,
+#'   htmlArgs = list(
+#'     caption = 'CRR models.', rgroup = c('Age', 'Sex', 'Blood type'),
+#'     rnames = c('+1 year change', 'Female', 'B', 'AB', 'O')
+#'   )
+#' )
 #'
 #' @export
 
-summary.crr2 <- function(object, conf.int = 0.95, ..., n = FALSE,
+summary.crr2 <- function(object, conf.int = 0.95, ..., n = FALSE, ref = FALSE,
                          html = FALSE, combine_ci = FALSE, digits = 2L,
-                         format_p = html, color_p = html) {
+                         format_p = html, color_p = html, format_n = n,
+                         htmlArgs = list()) {
+  if (!any(class(object) %in% 'crr2_list'))
+    return(summary(dropcrr2(object)))
+  
   assert_class(object, 'crr2')
   oo <- object
+  
+  if (html && !is.loaded('htmlTable')) {
+    message('The \'htmlTable\' package is not loaded', domain = NA)
+    html <- FALSE
+  }
   
   rFUN <- if (!html & !format_p & !combine_ci)
     round else roundr
   
-  if (n) {
-    ns <- lapply(object, function(x) {
-      y <- attr(x, 'failcode')
-      x <- attr(x, 'model.frame')
-      
-      x <- lapply(seq_along(x), function(ii) {
-        xx <- x[[ii]]
-        if (is.factor(xx))
-          cbind(table(xx)[-1L], table(xx[y == 1L])[-1L])
-        else cbind(length(sort(xx)), length(sort(xx[y == 1L])))
-      })
-      do.call('rbind', x)
+  ns <- lapply(object, function(x) attr(x, 'ns'))
+  nn <- nt <- lapply(ns, function(x) do.call('rbind', x))
+  pp <- lapply(ns, function(x) {
+    x <- lapply(x, function(y) {
+      x <- prop.table(y, margin = 2L)
+      round(x * 100)
     })
+    do.call('rbind', x)
+  })
+  
+  if (!ref) {
+    nn <- lapply(nn, function(x) x[!grepl('^Reference', rownames(x)), ])
+    pp <- lapply(pp, function(x) x[!grepl('^Reference', rownames(x)), ])
   }
   
-  object <- lapply(object, tidy_, conf.int = conf.int, ...)
+  object <- lapply(object, tidy_, conf.int = conf.int, ref = ref, ...)
   object <- lapply(seq_along(object), function(ii) {
     o <- object[[ii]]
     o[, -ncol(o)] <- lapply(o[, -ncol(o)], function(x)
       rFUN(x, digits))
-    if (n)
+    if (n) {
       o <- `rownames<-`(
-        cbind(`colnames<-`(ns[[ii]], c('N', 'Events')), o),
+        cbind(`colnames<-`(nn[[ii]], c('Total', 'Events')), o),
         rownames(o)
       )
+      if (html && format_n) {
+        o <- within(o, {
+          Total  <- sprintf('%s (%s)', Total, pp[[ii]][, 1L])
+          Events <- sprintf('%s (%s)', Events, pp[[ii]][, 2L])
+        })
+      }
+    }
     o <- within(o, {
       p <- if (format_p) {
         if (color_p)
           color_pval(p)
         else pvalr(p, html = html)
       } else rFUN(p, digits)
-      # if (n)
-      #   `N (Events)` <- sprintf('%s (%s)', N, Events)
       `HR (% CI)` <- sprintf('%s (%s, %s)', HR, LCI, UCI)
     })
+    o[grepl('^Reference', rownames(o)), ncol(o)] <- NA
     
     nt <- if (html && n && ii > 1L)
-      'Events' else if (n) c('N', 'Events') else NULL
+      'Events' else if (n) c('Total', 'Events') else NULL
     ci <- if (combine_ci)
       'HR (% CI)' else c('HR', 'LCI', 'UCI')
     
@@ -384,23 +445,29 @@ summary.crr2 <- function(object, conf.int = 0.95, ..., n = FALSE,
   ## remove crr2 list labels
   colnames(o) <- gsub('.*\\.', '', colnames(o))
   
-  if (html && !is.loaded('htmlTable')) {
-    message('The \'htmlTable\' package is not loaded', domain = NA)
-    html <- FALSE
-  }
-  
   if (html) {
-    # o <- gsub('<(?=\\s*\\d)', '&lt;', o, perl = TRUE)
-    # o <- gsub('>(?=\\s*\\d)', '&gt;', o, perl = TRUE)
+    o[grepl('^NA$|>NA<', o)] <- ''
     
-    ## bug in htmlTable v1.9 with class == c('html', ...)
+    if (format_n) {
+      ii <- grep('^(Total|Events)', colnames(o))
+      ni <- sapply(ns, function(x) sapply(x, colSums))
+      ni <- c(ni[1L, 1L], ni[2L, ])
+      colnames(o)[ii] <- sprintf('%s<br /><font size=1>n = %s (%s)</font>',
+                                 colnames(o)[ii], ni, round(ni / ni[1L] * 100))
+      colnames(o)[1L] <- gsub('\\(\\d+\\)', '(%)', colnames(o)[1L])
+    }
+    
+    largs <- list(
+      x = o, rgroup = names(ns[[1L]]),
+      n.rgroup = sapply(ns[[1L]], nrow) - (!ref) * attr(oo[[1L]], 'has_reference'),
+      cgroup = c(if (n) '' else NULL, names(object)),
+      n.cgroup = if (n)
+        c(1L, lengths(object) - (seq_along(object) == 1L)) else lengths(object),
+      css.cell = 'padding: 0px 5px 0px; white-space: nowrap;'
+    )
+    
     structure(
-      htmlTable(
-        o, ..., cgroup = c(if (n) '' else NULL, names(object)),
-        n.cgroup = if (n)
-          c(1L, lengths(object) - (seq_along(object) == 1L)) else lengths(object),
-        css.cell = 'padding: 0px 5px 0px; white-space: nowrap;'
-      ), class = 'htmlTable'
+      do.call('htmlTable', modifyList(largs, htmlArgs)), class = 'htmlTable'
     )
   } else {
     div <- ifelse(combine_ci, 2L, 4L) + n * 2
@@ -446,8 +513,9 @@ summary.crr2 <- function(object, conf.int = 0.95, ..., n = FALSE,
 
 finegray2 <- function(formula, data, cencode, ...) {
   localFinegray <- function(..., weights, init, control, ties, singular.ok,
-                            robust, model, x, y, tt, method)
+                            robust, model, x, y, tt, method) {
     finegray(...)
+  }
   localCoxph <- function(..., etype, prefix, count, id) {
     ## extra steps to get proper call in coxph(...)$call
     m <- match.call()
@@ -479,16 +547,22 @@ finegray2 <- function(formula, data, cencode, ...) {
   
   data[, svar] <- factor(data[, svar], c(cencode, crisks))
   
-  fg <- lapply(crisks, function(x)
-    do.call('localFinegray', list(formula = formula, data = data, etype = x,
-                                  prefix = 'fg', ...)))
+  fg <- lapply(crisks, function(x) {
+    do.call(
+      'localFinegray',
+      list(formula = formula, data = data, etype = x, prefix = 'fg', ...)
+    )
+  })
   
-  cform <- sprintf('Surv(fgstart, fgstop, fgstatus) ~ %s',
-                   paste(rhs, collapse = ' + '))
+  cform <- sprintf(
+    'Surv(fgstart, fgstop, fgstatus) ~ %s', paste(rhs, collapse = ' + ')
+  )
   
   fg <- lapply(fg, function(x) {
-    fit <- do.call('localCoxph', list(formula = as.formula(cform), data = x,
-                                      weights = x$fgwt, ...))
+    fit <- do.call(
+      'localCoxph',
+      list(formula = as.formula(cform), data = x, weights = x$fgwt, ...)
+    )
     fit$call$data    <- quote(fgdata)
     fit$call$weights <- quote(fgwt)
     fit$fgdata <- x
@@ -498,16 +572,50 @@ finegray2 <- function(formula, data, cencode, ...) {
   setNames(fg, crisks)
 }
 
-tidy_ <- function(x, conf.int = 0.95, ...) {
+dropcrr2 <- function(x) {
+  structure(x, class = setdiff(class(x), c('crr2', 'crr2_list')))
+}
+
+insert <- function(x, where = NULL, what = paste('Reference', seq_along(wh))) {
+  if (!length(where))
+    return(x)
+  
+  ii <- seq.int(nrow(x))
+  
+  o <- sort(c(ii, where))
+  w <- !duplicated(o) & ave(o, o, FUN = length) > 1L
+  x <- x[o, ]
+  
+  x[w, ] <- NA
+  
+  if (is.null(rn <- rownames(x)))
+    return(x)
+  
+  rownames(x)[w] <- make.unique(what)
+  rownames(x)[which(w) + 1L] <- rn[which(w)]
+  
+  x
+}
+
+tidy_ <- function(x, conf.int = 0.95, ref = FALSE, ...) {
   ## clean up crr or coxph objects
   # tidy_(coxph(Surv(time, status) ~ rx, colon))
+  ns <- if (ref && !is.null(ns <- attr(x, 'ns'))) {
+    rr <- unlist(lapply(ns, rownames))
+    ii <- grep('^Reference', rr)
+    ii - head(c(0L, cumsum(!!ii)), -1L)
+  } else NULL
+  
+  if (inherits(x, 'crr2'))
+    class(x) <- c('crr', class(x))
   assert_class(x, c('crr', 'coxph'))
   
   s <- summary(x, conf.int = conf.int, ...)
-  
-  setNames(
-    data.frame(s$conf.int[, -2L, drop = FALSE],
-               s$coef[,  -(1:4), drop = FALSE]),
-    c('HR', 'LCI', 'UCI', 'p')
+  s <- data.frame(
+    s$conf.int[, -2L, drop = FALSE],
+    s$coef[,  -(1:4), drop = FALSE]
   )
+  s <- insert(s, ns, rr[ii])
+  
+  setNames(s, c('HR', 'LCI', 'UCI', 'p'))
 }

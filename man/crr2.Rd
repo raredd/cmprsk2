@@ -82,7 +82,7 @@ crrs <- crr2(form, data = transplant,
 summary(crrs)
 
 library('htmlTable')
-summary(crrs, html = TRUE)
+summary(crrs, html = TRUE, n = TRUE)
 
 
 ## use the call from a crr2 object to run cmprsk::crr
