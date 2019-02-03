@@ -4,8 +4,8 @@
 \alias{timepoints2}
 \title{\code{timepoints} formatter}
 \usage{
-timepoints2(w, times, digits = 3L, sd = FALSE, ci = FALSE, html = FALSE,
-  ...)
+timepoints2(w, times, digits = 3L, sd = FALSE, ci = FALSE,
+  html = FALSE, ...)
 }
 \arguments{
 \item{w, times}{arguments passed to \code{\link{timepoints}}}
