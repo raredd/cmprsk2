@@ -12,7 +12,8 @@
 \arguments{
 \item{object}{an object of class \code{\link{crr2}}}
 
-\item{conf.int}{level of confidence}
+\item{conf.int}{the level for a two-sided confidence interval on the
+coeficients; default is 0.95}
 
 \item{n}{logical; if \code{TRUE}, the sample size and number of events
 for each variable are added to the summary}
@@ -24,10 +25,10 @@ added to results}
 returned; otherwise, a matrix}
 
 \item{combine_ci}{logical; if \code{FALSE}, upper and lower confidence
-limits will be returned as separate columsn; otherwise, an interval string
+limits will be returned as separate columns; otherwise, an interval string
 will be returned}
 
-\item{digits}{integer value indicating number of digits to print}
+\item{digits}{number of digits past the decimal point to keep}
 
 \item{format_p}{logical; if \code{TRUE}, p-values will be formatted;
 otherwise, p-values will only be rounded}
@@ -36,7 +37,7 @@ otherwise, p-values will only be rounded}
 colored based on significance level; see \code{cmprsk2:::color_pval}}
 
 \item{format_n}{logical; if \code{TRUE}, for \code{html = TRUE} the total
-n is added for each total/events column and percentages of total and events
+n is added for each total/events column and percents of total and events
 are shown in each row}
 
 \item{htmlArgs}{for \code{html = TRUE}, a \emph{named} list of arguments
@@ -60,7 +61,7 @@ library('htmlTable')
 summary(crrs, html = TRUE, combine_ci = TRUE, n = TRUE)
 
 summary(
-  crrs, html = TRUE, combine_ci = TRUE, n = TRUE,
+  crrs, html = TRUE, combine_ci = TRUE, n = TRUE, ref = TRUE,
   htmlArgs = list(
     caption = 'CRR models.', rgroup = c('Age', 'Sex', 'Blood type'),
     rnames = c('+1 year change', 'Female', 'B', 'AB', 'O')

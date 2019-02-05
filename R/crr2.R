@@ -2,7 +2,7 @@
 # crr2, print.crr2, summary.crr2, finegray2
 # 
 # unexported:
-# dropcrr2, insert, tidy_
+# dropcrr2, insert, tidy
 ###
 
 
@@ -90,21 +90,27 @@
 #'
 #'
 #' ## example from cmprsk::crr
-#'
+#' 
 #' # simulated data to test
 #' set.seed(10)
-#' ftime <- rexp(200)
-#' fstatus <- sample(0:2,200,replace=TRUE)
-#' cov <- matrix(runif(600),nrow=200)
-#' dimnames(cov)[[2]] <- c('x1','x2','x3')
-#' print(z <- crr(ftime,fstatus,cov))
-#' summary(z)
-#' deviance(z)
-#'
+#' ftime   <- rexp(200)
+#' fstatus <- sample(0:2, 200, replace = TRUE)
+#' cov <- matrix(runif(600), 200, dimnames = list(NULL, c('x1', 'x2', 'x3')))
 #' dat <- data.frame(ftime = ftime, fstatus = fstatus, cov)
-#' (z2 <- crr2(Surv(ftime, fstatus(0) == 1) ~ ., dat, cox = FALSE))
-#' z$call <- z2[[1]]$call <- NULL
-#' all.equal(z[names(z)], z2[[1]][names(z)])
+#' 
+#' ## cmprsk::crr
+#' (z1 <- crr(ftime, fstatus, cov, failcode = 1, cencode = 0))
+#' 
+#' ## cmprsk2::crr2
+#' (z2 <- crr2(Surv(ftime, fstatus(0) == 1) ~ ., dat))
+#' 
+#' summary(z1)
+#' summary(z2)
+#' summary(z2[[1]])
+#' 
+#' z1$call <- z2[[1]]$call <- NULL
+#' all.equal(z1[names(z1)], z2[[1]][names(z1)])
+#' # [1] TRUE
 #'
 #' @export
 
@@ -154,15 +160,13 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
                    toString(shQuote(wh)), deparse(name), shQuote(form[[1L]][2L]))
       ),
       call. = FALSE
-      )
+    )
   
   ## all events of interest minus censored
   crisks <- if (!is.null(which))
     which else c(failcode, setdiff(status, c(cencode, failcode)))
   stopifnot(
     length(crisks) >= 1L
-    # failcode %in% status,
-    # cencode %in% status
   )
   
   cengroup <- cengroup %||% rep_len(1L, nrow(data))
@@ -318,7 +322,8 @@ print.crr2 <- function(x, ...) {
 #' \code{crr2} summary method
 #'
 #' @param object an object of class \code{\link{crr2}}
-#' @param conf.int level of confidence
+#' @param conf.int the level for a two-sided confidence interval on the
+#' coeficients; default is 0.95
 #' @param n logical; if \code{TRUE}, the sample size and number of events
 #' for each variable are added to the summary
 #' @param ref logical; if \code{TRUE}, rows with reference categories are
@@ -326,15 +331,15 @@ print.crr2 <- function(x, ...) {
 #' @param html logical; if \code{TRUE}, an \code{\link{htmlTable}} will be
 #' returned; otherwise, a matrix
 #' @param combine_ci logical; if \code{FALSE}, upper and lower confidence
-#' limits will be returned as separate columsn; otherwise, an interval string
+#' limits will be returned as separate columns; otherwise, an interval string
 #' will be returned
-#' @param digits integer value indicating number of digits to print
+#' @param digits number of digits past the decimal point to keep
 #' @param format_p logical; if \code{TRUE}, p-values will be formatted;
 #' otherwise, p-values will only be rounded
 #' @param color_p logical; if \code{TRUE}, p-values will be formatted and
 #' colored based on significance level; see \code{cmprsk2:::color_pval}
 #' @param format_n logical; if \code{TRUE}, for \code{html = TRUE} the total
-#' n is added for each total/events column and percentages of total and events
+#' n is added for each total/events column and percents of total and events
 #' are shown in each row
 #' @param htmlArgs for \code{html = TRUE}, a \emph{named} list of arguments
 #' passed to \code{\link[htmlTable]{htmlTable}} for additional formatting or
@@ -356,7 +361,7 @@ print.crr2 <- function(x, ...) {
 #' summary(crrs, html = TRUE, combine_ci = TRUE, n = TRUE)
 #' 
 #' summary(
-#'   crrs, html = TRUE, combine_ci = TRUE, n = TRUE,
+#'   crrs, html = TRUE, combine_ci = TRUE, n = TRUE, ref = TRUE,
 #'   htmlArgs = list(
 #'     caption = 'CRR models.', rgroup = c('Age', 'Sex', 'Blood type'),
 #'     rnames = c('+1 year change', 'Female', 'B', 'AB', 'O')
@@ -398,7 +403,7 @@ summary.crr2 <- function(object, conf.int = 0.95, n = FALSE, ref = FALSE,
     pp <- lapply(pp, function(x) x[!grepl('^Reference', rownames(x)), ])
   }
   
-  object <- lapply(object, tidy_, conf.int = conf.int, ref = ref, ...)
+  object <- lapply(object, tidy, conf.int = conf.int, ref = ref)
   object <- lapply(seq_along(object), function(ii) {
     o <- object[[ii]]
     o[, -ncol(o)] <- lapply(o[, -ncol(o)], function(x)
@@ -574,30 +579,31 @@ dropcrr2 <- function(x) {
   structure(x, class = setdiff(class(x), c('crr2', 'crr2_list')))
 }
 
-insert <- function(x, where = NULL, what = paste('Reference', seq_along(wh))) {
+insert <- function(x, where = NULL, what = paste('Reference', seq_along(where))) {
+  ## insert rows into data frame/matrix and fix rownames
+  # cmprsk2:::insert(head(cars), c(1, 4, 6))
   if (!length(where))
     return(x)
   
+  stopifnot(
+    all(where <= nrow(x))
+  )
+  
   ii <- seq.int(nrow(x))
+  oo <- sort(c(ii, where))
+  wh <- which(!duplicated(oo) & ave(oo, oo, FUN = length) > 1L)
+  xo <- x[oo, ]
+  xo[wh, ] <- NA
   
-  o <- sort(c(ii, where))
-  w <- !duplicated(o) & ave(o, o, FUN = length) > 1L
-  x <- x[o, ]
-  
-  x[w, ] <- NA
-  
-  if (is.null(rn <- rownames(x)))
-    return(x)
-  
-  rownames(x)[w] <- make.unique(what)
-  rownames(x)[which(w) + 1L] <- rn[which(w)]
-  
-  x
+  if (!is.null(rn <- rownames(xo))) {
+    rownames(xo)[c(wh, wh + 1L)] <- c(make.unique(what), rn[wh])
+    xo
+  } else xo
 }
 
-tidy_ <- function(x, conf.int = 0.95, ref = FALSE) {
+tidy <- function(x, conf.int = 0.95, ref = FALSE) {
   ## clean up crr or coxph objects
-  # tidy_(coxph(Surv(time, status) ~ rx, colon))
+  # cmprsk2:::tidy(coxph(Surv(time, status) ~ rx, colon))
   ns <- if (ref && !is.null(ns <- attr(x, 'ns'))) {
     rr <- unlist(lapply(ns, rownames))
     ii <- grep('^Reference', rr)

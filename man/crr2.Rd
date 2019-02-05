@@ -96,18 +96,24 @@ eval(cl[[1]]$call)
 
 # simulated data to test
 set.seed(10)
-ftime <- rexp(200)
-fstatus <- sample(0:2,200,replace=TRUE)
-cov <- matrix(runif(600),nrow=200)
-dimnames(cov)[[2]] <- c('x1','x2','x3')
-print(z <- crr(ftime,fstatus,cov))
-summary(z)
-deviance(z)
-
+ftime   <- rexp(200)
+fstatus <- sample(0:2, 200, replace = TRUE)
+cov <- matrix(runif(600), 200, dimnames = list(NULL, c('x1', 'x2', 'x3')))
 dat <- data.frame(ftime = ftime, fstatus = fstatus, cov)
-(z2 <- crr2(Surv(ftime, fstatus(0) == 1) ~ ., dat, cox = FALSE))
-z$call <- z2[[1]]$call <- NULL
-all.equal(z[names(z)], z2[[1]][names(z)])
+
+## cmprsk::crr
+(z1 <- crr(ftime, fstatus, cov, failcode = 1, cencode = 0))
+
+## cmprsk2::crr2
+(z2 <- crr2(Surv(ftime, fstatus(0) == 1) ~ ., dat))
+
+summary(z1)
+summary(z2)
+summary(z2[[1]])
+
+z1$call <- z2[[1]]$call <- NULL
+all.equal(z1[names(z1)], z2[[1]][names(z1)])
+# [1] TRUE
 
 }
 \seealso{
