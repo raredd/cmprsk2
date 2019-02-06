@@ -1,3 +1,10 @@
+---
+date: "05 Feb 2019"
+output:
+  html_document:
+    keep_md: yes
+---
+
 cmprsk2
 ====
 
@@ -368,7 +375,7 @@ plot(ci2, add = TRUE) ## equivalently
 plot(ci2, split = 'event', add = TRUE, wh.events = 'est')
 ```
 
-![](inst/etc/ci1.png)<!-- -->
+![](cmprk2_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 ```r
 ## convenience wrapper
@@ -380,7 +387,7 @@ ciplot_by(
 )
 ```
 
-![](inst/etc/ci2.png)<!-- -->
+![](cmprk2_files/figure-html/unnamed-chunk-6-2.png)<!-- -->
 
 ### extras
 

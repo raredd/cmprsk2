@@ -2,6 +2,7 @@
 ^\.Rproj\.user$
 inst/deprecated
 inst/docs
+inst/etc
 inst/misc
 inst/rpart
 inst/scripts

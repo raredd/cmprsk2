@@ -1,5 +1,9 @@
 .*
-inst
+inst/deprecated
+inst/docs
+inst/misc
+inst/rpart
+inst/scripts
 TODO
 .Rproj.user
 vignettes/*

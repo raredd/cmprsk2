@@ -1,0 +1,122 @@
+---
+date: "`r format(Sys.Date(), format = '%d %b %Y')`"
+output:
+  html_document:
+    keep_md: yes
+---
+
+cmprsk2
+====
+
+Extensions for the [cmprsk](https://cran.r-project.org/web/packages/cmprsk/index.html) package.
+
+See [intro vignette](vignettes/cmprsk2.Rmd)
+
+To install:
+
+```r
+# install.packages('devtools')
+devtools::install_github('raredd/cmprsk2', build_vignettes = TRUE)
+```
+
+```{r, echo=FALSE, include=FALSE}
+library('cmprsk2')
+
+options(width = 100)
+
+library('knitr')
+opts_chunk$set(fig.width = 10, fig.height = 8)
+```
+
+### crr formula method
+
+```{r, message=FALSE}
+## model deaths with ltx and withdraw as competing events
+cr1 <- crr2(Surv(futime, event(censored) == death) ~ age + sex + abo,
+            data = transplant)
+
+## include an all-cause death overall survival model
+cr2 <- crr2(Surv(futime, event(censored) == death) ~ age + sex + abo,
+            data = transplant,
+            cox = Surv(futime, event == 'death') ~ age + sex + abo)
+```
+
+### crr2 summary methods
+
+```{r}
+summary(cr1)
+
+library('htmlTable')
+summary(
+  cr2,
+  html = TRUE, n = TRUE, ref = TRUE,
+  htmlArgs = list(
+    caption = 'CRR models.',
+    rgroup = c('Age', 'Sex', 'Blood type'),
+    rnames = c('+1 year change', 'Female', 'B', 'AB', 'O'),
+    css.cell = 'white-space: nowrap; padding: 0px 5px 0px;'
+  )
+)
+```
+
+### cuminc formula method
+
+```{r}
+## can use same formula as crr2
+ci1 <- cuminc2(Surv(futime, event(censored) == death) ~ abo,
+               data = transplant)
+
+## but event indicator is not required
+ci2 <- cuminc2(Surv(futime, event(censored)) ~ sex,
+               data = transplant)
+```
+
+### cuminc2 summary methods
+
+```{r}
+summary(ci1)
+
+summary(ci1, times = 0:10 * 100)$est
+```
+
+### cuminc plotting methods
+
+```{r}
+par(mfrow = c(2, 2))
+
+# ciplot(ci2)
+plot(ci2, add = TRUE) ## equivalently
+
+plot(ci2, split = 'event', add = TRUE, wh.events = 'est')
+
+
+## convenience wrapper
+par(mfrow = c(2, 2))
+ciplot_by(
+  rhs = 'sex', time = 'futime', event = 'event',
+  data = transplant, by = 'abo', xlim = c(0, 1500),
+  events = FALSE, single = FALSE, events.total = 2100
+)
+```
+
+### extras
+
+```{r}
+## pairwise gray tests
+cuminc_pairs(ci1)$p.value
+
+timepoints2(
+  ci2, html = TRUE,
+  htmlArgs = list(
+    caption = 'cuminc estimates at specific time points (<code>cuminc::timepoints</code>).'
+  )
+)
+
+AIC(cr1$`CRR: death`)
+sapply(cr1, BIC)
+logLik(cr1$`CRR: death`)
+deviance(cr1$`CRR: death`)
+
+crrFits(cr1$`CRR: death`)
+crrwald.test(cr1$`CRR: death`)
+```
