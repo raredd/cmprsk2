@@ -529,8 +529,10 @@ name_or_index <- function(x, y = NULL) {
 #' @param html logical; if \code{TRUE}, an html-friendly format is returned;
 #' the print method for \code{timepoints2} will use \code{\link{htmlTable}}
 #' if \code{html = TRUE}
-#' @param ... additional arguments passed to \code{\link{htmlTable}} (only
-#' when \code{html = TRUE})
+#' @param htmlArgs for \code{html = TRUE}, a \emph{named} list of arguments
+#' passed to \code{\link[htmlTable]{htmlTable}} for additional formatting or
+#' to override defaults
+#' @param ... ignored
 #' 
 #' @examples
 #' ci <- cuminc2(Surv(futime, event(censored)) ~ sex, transplant)
@@ -570,7 +572,8 @@ timepoints2 <- function(w, times, digits = 3L, sd = FALSE,
   if (missing(times))
     times <- pretty(tt)
   times <- times[times %inside% rr]
-  tp <- timepoints(w, times)
+  
+  tp  <- timepoints(w, times)
   res <- tp$est
   
   fmt <- if (ci)
@@ -593,11 +596,13 @@ timepoints2 <- function(w, times, digits = 3L, sd = FALSE,
   
   res <- gsub('NA.*$', '-', res)
   
-  if (html)
-    structure(
-      htmlTable::htmlTable(
-        res, css.cell = 'padding: 0px 5px 0px; white-space: nowrap;', ...),
-      class = 'htmlTable'
+  if (html) {
+    largs <- list(
+      x = res, css.cell = 'padding: 0px 5px 0px; white-space: nowrap;'
     )
-  else res
+    
+    structure(
+      do.call('htmlTable', modifyList(largs, htmlArgs)), class = 'htmlTable'
+    )
+  } else res
 }

@@ -21,8 +21,11 @@ shown with the estimate}
 the print method for \code{timepoints2} will use \code{\link{htmlTable}}
 if \code{html = TRUE}}
 
-\item{...}{additional arguments passed to \code{\link{htmlTable}} (only
-when \code{html = TRUE})}
+\item{...}{ignored}
+
+\item{htmlArgs}{for \code{html = TRUE}, a \emph{named} list of arguments
+passed to \code{\link[htmlTable]{htmlTable}} for additional formatting or
+to override defaults}
 }
 \description{
 Format output from \code{\link[cmprsk]{timepoints}} into a single matrix

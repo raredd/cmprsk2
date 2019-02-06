@@ -75,12 +75,12 @@ extractIC <- function(object, ic = c('AIC', 'BIC', 'AICc', 'BICc'), p) {
   
   ## get number of events of interest from function call
   ne <- tryCatch(
-    sum(object$nuftime %||%
-          eval(cl$fstatus) %in% eval(cl$failcode)),
+    sum({object$nuftime} %||% {eval(cl$fstatus) %in% eval(cl$failcode)}),
     error = function(e) {
       if (ic == 'BIC')
-        warning('BIC is approximate: use p = # of events of interest',
-                call. = FALSE)
+        warning(
+          'BIC is approximate: use p = # events of interest', call. = FALSE
+        )
       length(object[['uftime']])
     })
   
@@ -94,6 +94,7 @@ extractIC <- function(object, ic = c('AIC', 'BIC', 'AICc', 'BICc'), p) {
   
   if (ic == 'AICc')
     res <- res + 2 * (k + 1) * (k + 2) / (n - k - 2)
+  
   setNames(res, ic)
 }
 

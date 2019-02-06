@@ -371,7 +371,7 @@ print.crr2 <- function(x, ...) {
 #' @export
 
 summary.crr2 <- function(object, conf.int = 0.95, n = FALSE, ref = FALSE,
-                         html = FALSE, combine_ci = FALSE, digits = 2L,
+                         html = FALSE, combine_ci = html, digits = 2L,
                          format_p = html, color_p = html, format_n = n,
                          htmlArgs = list(), ...) {
   if (!any(class(object) %in% 'crr2_list'))

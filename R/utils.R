@@ -9,7 +9,7 @@
 
 
 `%||%` <- function(x, y) {
-  if (is.null(x) | !length(x)) y else x
+  if (is.null(x) || !length(x)) y else x
 }
 
 `%inside%` <- function(x, interval) {

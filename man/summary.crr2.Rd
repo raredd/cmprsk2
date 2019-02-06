@@ -5,7 +5,7 @@
 \title{\code{crr2} summary method}
 \usage{
 \method{summary}{crr2}(object, conf.int = 0.95, n = FALSE,
-  ref = FALSE, html = FALSE, combine_ci = FALSE, digits = 2L,
+  ref = FALSE, html = FALSE, combine_ci = html, digits = 2L,
   format_p = html, color_p = html, format_n = n, htmlArgs = list(),
   ...)
 }
