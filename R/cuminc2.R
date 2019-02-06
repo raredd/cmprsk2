@@ -560,8 +560,8 @@ name_or_index <- function(x, y = NULL) {
 #' 
 #' @export
 
-timepoints2 <- function(w, times, digits = 3L, sd = FALSE,
-                        ci = FALSE, html = FALSE, ...) {
+timepoints2 <- function(w, times, digits = 3L, sd = FALSE, ci = FALSE,
+                        html = FALSE, htmlArgs = list(), ...) {
   w <- if (inherits(w, 'cuminc2'))
     w[['cuminc']]
   else if (inherits(w, 'cuminc'))
