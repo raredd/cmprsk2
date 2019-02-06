@@ -5,7 +5,7 @@
 \title{\code{timepoints} formatter}
 \usage{
 timepoints2(w, times, digits = 3L, sd = FALSE, ci = FALSE,
-  html = FALSE, ...)
+  html = FALSE, htmlArgs = list(), ...)
 }
 \arguments{
 \item{w, times}{arguments passed to \code{\link{timepoints}}}
@@ -21,11 +21,11 @@ shown with the estimate}
 the print method for \code{timepoints2} will use \code{\link{htmlTable}}
 if \code{html = TRUE}}
 
-\item{...}{ignored}
-
 \item{htmlArgs}{for \code{html = TRUE}, a \emph{named} list of arguments
 passed to \code{\link[htmlTable]{htmlTable}} for additional formatting or
 to override defaults}
+
+\item{...}{ignored}
 }
 \description{
 Format output from \code{\link[cmprsk]{timepoints}} into a single matrix
