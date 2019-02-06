@@ -32,16 +32,16 @@ The two main package functions, `cuminc2` and `crr2`, provide a convenient formu
 The syntax for creating survival objects is
 
 $$Surv(time, status) \sim rhs$$
-Similarly, the syntax for **`cmprsk`** formals is
+Similarly, the syntax for creating **`cmprsk`** objects is
 
 $$Surv(time, status(censor) == event) \sim rhs$$
-where `status` is a variable indicating status, normally including "0", "Censor", or "Censored" indicating censoring, and two or more unique event indicators for each competing risk. `event` in the formula will be one of the event indicators found in `status` and will be considered the event of interest.
+where `status` is a categorical variable with censoring indicators, usually "0", "Censor", "Censored", etc., and two or more unique event indicators for each competing risk. `event` in the formula will be one of the event indicators found in `status` and will be considered the primary event of interest.
 
 ## examples
 
 ### cumulative incidence
 
-Note in the formula that it is not necessary to specify the event of interest.
+Note in the formula that it is not necessary to specify the event of interest for `cuminc2`.
 
 ```{r}
 ci <- cuminc2(Surv(futime, event(censored)) ~ sex, transplant)
@@ -49,8 +49,10 @@ summary(ci)
 
 cmprsk::timepoints(ci$cuminc, times = 0:4 * 500)
 cmprsk2::timepoints2(ci)
-cmprsk2::timepoints2(ci, sd = TRUE, html = TRUE,
-                     caption = 'Table 1: Timepoints.')
+cmprsk2::timepoints2(
+  ci, sd = TRUE, html = TRUE,
+  htmlArgs = list(caption = 'Table 1: Timepoints.')
+)
 
 plot(ci)
 
@@ -62,9 +64,9 @@ plot(ci, split = 'event')
 
 ### competing risks regression
 
-While it is necessary to specify the event of interest in the `crr2` formula, this will be the _primary_ event of interest, that is, models are fit for all other unique competing events, and the primary event model will be listed first.
+While it is necessary to specify the event of interest in the `crr2` formula, this will be the _primary_ event of interest. That is, by default models are fit for all competing events, but the primary event model will be listed first.
 
-Using `crr2(..., which = "event")` will only fit models the requested models.
+Using `crr2(..., which = event)` will only fit model(s) for `event`.
 
 ```{r}
 cr <- crr2(Surv(futime, event(censored) == death) ~ sex, transplant)
@@ -72,22 +74,31 @@ summary(cr)
 
 
 cr <- crr2(Surv(futime, event(censored) == death) ~ sex + abo, transplant)
-summary(cr, html = TRUE)
+summary(cr, n = TRUE, ref = TRUE)
 
 
 cr <- crr2(Surv(futime, event(censored) == ltx) ~ sex + abo, transplant,
-           cox = TRUE)
-summary(cr, combine_ci = TRUE, html = TRUE,
-        caption = 'Table 1: Competing risks.',
-        rnames = c('Female', paste('Type:', c('B', 'AB', 'O'))))
+           cox = Surv(futime, event == 'death') ~ sex + abo)
+summary(
+  cr, html = TRUE, n = TRUE, ref = TRUE,
+  htmlArgs = list(
+    caption = 'Table 1: Competing risks.',
+    rnames = with(transplant, c(levels(sex), levels(abo)))
+  )
+)
 
 
 cr <- crr2(Surv(futime, event(censored) == ltx) ~ sex + abo, transplant,
            which = 'ltx')
-summary(cr, combine_ci = TRUE, html = TRUE,
-        caption = 'Table 1: Competing risks.',
-        tfoot = '<font size=1>Blood type reference: A</font>',
-        rnames = c('Female', paste('Type:', c('B', 'AB', 'O'))))
+summary(
+  cr, html = TRUE, n = TRUE,
+  htmlArgs = list(
+    caption = 'Table 1: Competing risks.',
+    tfoot = '<font size=1>Reference groups: Sex, male; blood type, A.</font>',
+    rgroup = c('Sex', 'Blood type'),
+    rnames = c('Female', paste('Type:', c('B', 'AB', 'O')))
+  )
+)
 ```
 
 ## install
