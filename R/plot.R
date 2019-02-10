@@ -144,6 +144,8 @@ ciplot <- function(x,
   ng <- max(ng, 1L)
   cc <- col.ci
   
+  groups.lab <- rep_len(groups.lab, ng)
+  
   col.ci <- if (is.null(col.ci))
     seq_along(xx) else rep(col.ci, length.out = ng)
   ## must use rep instead of rep_len for names
@@ -163,11 +165,11 @@ ciplot <- function(x,
     )
   }
   
-  ## run thru tcol to convert integers and strings? idk but
-  ## running a string with alpha trans resets to no alpha/trans
-  ## so skip if already a hex color with alpha/trans
-  if (!any(grepl('(?i)#[a-z0-9]{8}', col.ci)))
-    col.ci <- tcol(col.ci)
+  ## -- what is the point of this
+  ## run thru tcol to convert integers and strings? idk but running a string
+  ## with alpha trans removes the alpha so skip if already a hex with alpha
+  # if (!any(grepl('(?i)#[a-z0-9]{8}', col.ci)))
+  #   col.ci <- tcol(col.ci)
   
   lwd.ci <- rep_len(lwd.ci, ng)
   lty.ci <- rep_len(lty.ci, ng)
@@ -197,17 +199,17 @@ ciplot <- function(x,
   if (is.null(ylim))
     ylim <- c(0, 1)
   
-  plot(xx[[1L]][[1L]], xx[[1L]][[2L]], type = 'n',
-       xlim = xlim, ylim = ylim, ann = FALSE, axes = FALSE,
-       panel.first = panel.first,
-       panel.last = {
-         box(bty = par('bty'))
-         axis(1L, xaxis.at, FALSE, lwd = 0, lwd.ticks = 1)
-         axis(1L, xaxis.at, xaxis.lab, FALSE, -0.5, cex.axis = cex.axis)
-         axis(2L, yaxis.at, yaxis.lab, las = 1L, cex.axis = cex.axis)
-         title(xlab = xlab, line = 1.5, adj = 0.5)
-         title(ylab = ylab, main = main)
-       })
+  plot(
+    xx[[1L]][[1L]], xx[[1L]][[2L]], type = 'n', xlim = xlim, ylim = ylim,
+    ann = FALSE, axes = FALSE, panel.first = panel.first,
+    panel.last = {
+      box(bty = par('bty'))
+      axis(1L, xaxis.at, FALSE, lwd = 0, lwd.ticks = 1)
+      axis(1L, xaxis.at, xaxis.lab, FALSE, -0.5, cex.axis = cex.axis)
+      axis(2L, yaxis.at, yaxis.lab, las = 1L, cex.axis = cex.axis)
+      title(xlab = xlab, line = 1.5, adj = 0.5)
+      title(ylab = ylab, main = main)
+    })
   
   ## ci lines
   u0 <- u1 <- par('usr')
@@ -242,11 +244,13 @@ ciplot <- function(x,
     ## at-risk label
     if (!(identical(events.lab, FALSE))) {
       events.lab <- if (is.null(events.lab))
-        switch(wh.events,
-               events = 'Cumulative events',
-               est    = 'Estimate',
-               est.sd = 'Estimate +/- Std. dev',
-               est.ci = 'Estimate [LCI, UCI]')
+        switch(
+          wh.events,
+          events = 'Cumulative events',
+          est    = 'Estimate',
+          est.sd = 'Estimate +/- Std. dev',
+          est.ci = 'Estimate [LCI, UCI]'
+        )
       else events.lab
       
       mtext(events.lab, side = 1L, at = usr[1L], line = 1.5,
@@ -277,11 +281,12 @@ ciplot <- function(x,
             col = 1L, las = 1L, cex = cex.axis, font = 2L)
     }
     
-    ## draw matching lines for n events  
+    ## draw matching lines for n events
+    axpad <- 4
     if (events.lines)
       for (ii in seq.int(ng))
-        ## mess with the 4 here to adjust the length of the events.line
-        axis(1L, c(group.name.pos + padding, 0 - 4 * padding), xpd = NA,
+        ## mess with axpad here to adjust the length of the events.line
+        axis(1L, c(group.name.pos + padding, 0 - axpad * padding), xpd = NA,
              labels = FALSE, line = line.pos[ii] + 0.6, lwd.ticks = 0,
              col = col.ci[ii], lty = lty.ci[ii], lwd = lwd.ci[ii])
     
@@ -333,7 +338,7 @@ ciplot <- function(x,
     txt <- tryCatch(gy_text(ci, details = test_details),
                     error = function(e) NULL)
     if (is.null(txt))
-      invisible(NULL)
+      NULL
     else {
       largs <- list(
         x = 'topleft', legend = paste0(names(txt), ': ', txt),
@@ -518,19 +523,20 @@ ciplot_by <- function(rhs = '1', event, data, by = NULL, single = TRUE,
     if (!plot)
       return(s0)
     
-    ciplot(s, add = add, main = names(sp)[x], ylab = ylab,
-           gy_test = gy_test, ...,
-           col.ci = if (map.col) unname(col.ci)[x] else col.ci,
-           panel.first = {
-             ## sub label - top left margin (default: strata var)
-             mtxt <- if (!msub)
-               rep_len(sub, length(sp))[x] else rhs
-             mtext(mtxt, 3, 0.25, FALSE, 0, 0, font = 3)
-             
-             ## figure label - top left outer margin (eg, A, B, C)
-             mtext(fig[x], 3, 0.25, FALSE, 0 - par('usr')[2L] * .05,
-                   font = 2, cex = 1.2)
-           })
+    ciplot(
+      s, add = add, main = names(sp)[x], ylab = ylab, gy_test = gy_test, ...,
+      col.ci = if (map.col) unname(col.ci)[x] else col.ci,
+      panel.first = {
+        ## sub label - top left margin (default: strata var)
+        mtxt <- if (!msub)
+          rep_len(sub, length(sp))[x] else rhs
+        mtext(mtxt, line = 0.25, FALSE, at = 0, adj = 0, font = 3L)
+        
+        ## figure label - top left outer margin (eg, A, B, C)
+        mtext(fig[x], line = 0.25, at = 0 - par('usr')[2L] * .05,
+              font = 2L, cex = 1.2)
+      }
+    )
     s0
   })
   names(l) <- names(sp) %||% rhs

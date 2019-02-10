@@ -142,7 +142,7 @@ parse_formula <- function(formula, data = NULL, name = NULL) {
     
     codes <- c(cencode, failcode)
     if (length(codes <- codes[codes %ni% data[, fstatus]]))
-      stop(
+      warning(
         sprintf('%s not found in %s[, %s]',
                 toString(shQuote(codes)), dname, shQuote(fstatus))
       )
@@ -253,51 +253,6 @@ strata <- function(formula) {
   strata  <- trimws(gsub('strata\\s*\\(([^)]+)|.', '\\1', formula))
   if (nzchar(strata))
     strata else NULL
-}
-
-tcol <- function(colors, trans = NULL, alpha = NULL) {
-  ## rawr::tcol
-  trans <- trans %||% 255L
-  stopifnot(
-    trans %inside% c(0L, 255L) | is.na(trans)
-  )
-  
-  ## convert alpha to trans
-  if (!is.null(alpha)) {
-    stopifnot(
-      alpha %inside% c(0, 1) | is.na(alpha)
-    )
-    trans <- as.integer(rescaler(alpha, to = c(0, 255), from = c(0, 1)))
-  }
-  
-  ## get color and trans to conformable lengths
-  if (length(colors) != length(trans) & 
-      !any(c(length(colors), length(trans)) == 1L))
-    stop('Vector lengths are not conformable')
-  if (length(colors) == 1L & length(trans) > 1L)
-    colors <- rep_len(colors, length(trans))
-  if (length(trans) == 1L & length(colors) > 1L)
-    trans <- rep_len(trans, length(colors))
-  
-  ## if color == 0, returns NA
-  if (length(nocol <- which(colors == 0))) {
-    colors[nocol] <- 1
-    trans[nocol] <- NA
-  }
-  
-  res <- paste0('#', apply(apply(rbind(col2rgb(colors)), 2L, function(x)
-    format(as.hexmode(x), width = 2L)), 2L, paste, collapse = ''))
-  res <- Map(paste0, res, tryCatch(
-    as.character(as.hexmode(trans)),
-    error = function(e) '', warning = function(w) ''
-  ))
-  res <- unname(unlist(res))
-  
-  ## return NAs and/or set color to transparent
-  res[is.na(colors) | is.na(trans)] <- NA
-  res[colors %in% 'transparent'] <- 'transparent'
-  
-  res
 }
 
 terms.inner <- function(x, survival = FALSE) {
