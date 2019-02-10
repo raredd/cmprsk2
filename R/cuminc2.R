@@ -111,9 +111,7 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
   attr(ci$cuminc2, 'name') <- Name
   
   structure(
-    ci,
-    call = call,
-    class = c('cuminc2', 'cuminc')
+    ci, call = call, class = c('cuminc2', 'cuminc')
   )
 }
 

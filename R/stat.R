@@ -87,8 +87,14 @@ extractIC <- function(object, ic = c('AIC', 'BIC', 'AICc', 'BICc'), p) {
   p <- if (!missing(p)) {
     ic <- paste('p', p, sep = '=')
     p
-  } else switch(ic, AIC = 2, BIC = log(ne), AICc = 2,
-                BICc = log(length(object[['res']][, 1L])))
+  } else
+    switch(
+      ic,
+      AIC = 2,
+      BIC = log(ne),
+      AICc = 2,
+      BICc = log(length(object[['res']][, 1L]))
+    )
   
   res <- p * k - 2 * object[['loglik']]
   
@@ -119,11 +125,9 @@ BIC.crr <- function(object, ...) {
 #' @rdname crrfit
 #' @export
 logLik.crr <- function(object, ...) {
-  val <- object[['loglik']]
-  
   structure(
-    val, class = 'logLik',
-    df = length(object[['coef']])
+    object[['loglik']], df = length(object[['coef']]),
+    class = 'logLik'
   )
 }
 
