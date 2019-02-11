@@ -530,7 +530,7 @@ ciplot_by <- function(rhs = '1', event, data, by = NULL, single = TRUE,
         ## sub label - top left margin (default: strata var)
         mtxt <- if (!msub)
           rep_len(sub, length(sp))[x] else rhs
-        mtext(mtxt, line = 0.25, FALSE, at = 0, adj = 0, font = 3L)
+        mtext(mtxt, line = 0.25, at = 0, adj = 0, font = 3L)
         
         ## figure label - top left outer margin (eg, A, B, C)
         mtext(fig[x], line = 0.25, at = 0 - par('usr')[2L] * .05,
