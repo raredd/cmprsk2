@@ -548,35 +548,35 @@ name_or_index <- function(x, y = NULL) {
 #' ## example from cmprsk::cuminc
 #' set.seed(2)
 #' ss <- rexp(100)
-#' gg <- factor(sample(1:3,100,replace=TRUE),1:3,c('a','b','c'))
-#' cc <- sample(0:2,100,replace=TRUE)
-#' strt <- sample(1:2,100,replace=TRUE)
-#' xx <- cuminc(ss,cc,gg,strt)
+#' gg <- factor(sample(1:3, 100, replace = TRUE), 1:3, c('a', 'b', 'c'))
+#' cc <- sample(0:2, 100, replace = TRUE)
+#' strt <- sample(1:2, 100, replace = TRUE)
+#' xx <- cuminc(ss, cc, gg, strt)
 #' 
 #' timepoints(xx, times = 0:4)
-#' timepoints2(xx, times = 0:4, digits = 5)
+#' timepoints2(xx, times = 0:4)
 #' 
 #' @export
 
-timepoints2 <- function(w, times, digits = 3L, sd = FALSE, ci = FALSE,
+timepoints2 <- function(w, times = NULL, digits = 3L, sd = FALSE, ci = FALSE,
                         html = FALSE, htmlArgs = list(), ...) {
   w <- if (inherits(w, 'cuminc2'))
     w[['cuminc']]
   else if (inherits(w, 'cuminc'))
     w else stop('\'w\' should be of class \'cuminc\' or \'cuminc2\'')
-  tt <- na.omit(unlist(sapply(w, `[`, 'time')))
-  rr <- range(tt)
   
-  if (missing(times))
-    times <- pretty(tt)
-  times <- times[times %inside% rr]
+  times <- if (is.null(times)) {
+    st <- sort(unlist(sapply(w, `[`, 'time')))
+    pt <- pretty(st)
+    pt[pt %inside% range(st)]
+  } else sort(unique(times))
   
   tp  <- timepoints(w, times)
   res <- tp$est
   
-  fmt <- if (ci)
-    sprintf('%%.%sf [%%.%sf - %%.%sf]', digits, digits, digits)
-  else sprintf('%%.%sf %s %%.%sf', digits, if (html) '&pm;' else '+/-', digits)
+  fmt <- if (!ci)
+    sprintf('%%.%sf %s %%.%sf', digits, if (html) '&pm;' else '+/-', digits)
+  else sprintf('%%.%sf [%%.%sf - %%.%sf]', digits, digits, digits)
   
   if (ci) {
     z <- qnorm(1 - 0.05 / 2)

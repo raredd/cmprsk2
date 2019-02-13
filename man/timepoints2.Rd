@@ -4,7 +4,7 @@
 \alias{timepoints2}
 \title{\code{timepoints} formatter}
 \usage{
-timepoints2(w, times, digits = 3L, sd = FALSE, ci = FALSE,
+timepoints2(w, times = NULL, digits = 3L, sd = FALSE, ci = FALSE,
   html = FALSE, htmlArgs = list(), ...)
 }
 \arguments{
@@ -47,12 +47,12 @@ print(
 ## example from cmprsk::cuminc
 set.seed(2)
 ss <- rexp(100)
-gg <- factor(sample(1:3,100,replace=TRUE),1:3,c('a','b','c'))
-cc <- sample(0:2,100,replace=TRUE)
-strt <- sample(1:2,100,replace=TRUE)
-xx <- cuminc(ss,cc,gg,strt)
+gg <- factor(sample(1:3, 100, replace = TRUE), 1:3, c('a', 'b', 'c'))
+cc <- sample(0:2, 100, replace = TRUE)
+strt <- sample(1:2, 100, replace = TRUE)
+xx <- cuminc(ss, cc, gg, strt)
 
 timepoints(xx, times = 0:4)
-timepoints2(xx, times = 0:4, digits = 5)
+timepoints2(xx, times = 0:4)
 
 }
