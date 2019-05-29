@@ -1,9 +1,8 @@
 ### formula method for cuminc
-# cuminc2, print.cuminc2, summary.cuminc2, split_cuminc, cuminc_pairs,
-# timepoints2
+# cuminc2, print.cuminc2, summary.cuminc2, cuminc_pairs, timepoints2
 # 
 # unexported:
-# get_events, gy_pval, gy_text, pw_pval, pw_text, name_or_index
+# get_events, gy_pval, gy_text, split_cuminc, pw_pval, pw_text, name_or_index
 ###
 
 
@@ -22,6 +21,10 @@
 #' @param rho,cencode,subset,na.action passed to \code{\link[cmprsk]{cuminc}};
 #' the censoring indicator will be guessed from \code{formula} but may be
 #' overridden by \code{cencode}
+#' 
+#' @seealso
+#' \code{\link{summary.cuminc2}}; \code{\link{plot.cuminc2}};
+#' \code{\link[cmprsk]{cuminc}}; 
 #' 
 #' @examples
 #' tp <- within(transplant, {
@@ -55,7 +58,6 @@
 #'   cuminc2(form, tp)$cuminc,
 #'   with(tp, cuminc(futime, event_ind, sex, abo))
 #' )
-#' 
 #' 
 #' @export
 
@@ -208,12 +210,15 @@ summary.cuminc2 <- function(object, times = NULL, digits = 5L, ...) {
   ## "atrisk"
   total_atrisk <- object$cuminc2[order(object$cuminc2$time), ]
   total_atrisk <- get_events(NULL, total_atrisk$time, times, TRUE)
-  # res <- c(total_events) - res
+  atrisk <- c(total_events) - res
+  # atrisk <- rbind(atrisk, Censored = total_atrisk - colSums(atrisk))
   
   l <- list(
     events = res, total_events = total_events,
     total_groups = c(table(object$cuminc2$group)),
-    total_atrisk = total_atrisk
+    atrisk = atrisk, atrisk_sum = colSums(atrisk),
+    total_atrisk = total_atrisk,
+    total_censored = total_atrisk - colSums(atrisk)
   )
   
   c(tp, l)

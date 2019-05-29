@@ -19,14 +19,17 @@
 #' @param wh.events a character string giving the type of \code{events} table
 #' to show; one of \code{"events"} (cumulative number of events), \code{"est"}
 #' (estimates, see \code{\link[cmprsk]{timepoints}}), \code{"est.sd"} (estimate
-#' +/- standard deviation), or \code{"est.ci"} (estimate with confidence
-#' inverval)
+#' +/- standard deviation), \code{"est.ci"} (estimate with confidence
+#' inverval), or \code{"atrisk"} (event at-risk table with censored)
 #' @param events.lab heading for events table
 #' @param events.digits when estimates are shown in events table (see
 #' \code{wh.events}), number of digits past the decimal to show
 #' @param events.lines logical; draw lines next to groups in events table
 #' @param events.col logical or a vector with colors for events table text;
 #' if \code{TRUE}, \code{col.ci} will be used
+#' @param include_censored logical; if \code{TRUE}, censored patients are
+#' included in at-risk counts (may not be desired); the default (\code{FALSE})
+#' will only sum the at-risk table rows
 #' @param main title of plot
 #' @param xlab,ylab x- and y-axis labels
 #' @param groups.lab labels for each line in \code{events} table
@@ -60,7 +63,8 @@
 #' \code{tcl}, \code{cex.lab}, \code{xaxs}, etc) passed to \code{\link{par}}
 #' 
 #' @seealso
-#' \code{\link{cuminc2}}; \code{\link{summary.cuminc2}}
+#' \code{\link{ciplot_by}}; \code{\link{cuminc2}};
+#' \code{\link{summary.cuminc2}}; \code{\link[cmprsk]{cuminc}}
 #' 
 #' @examples
 #' tp <- within(transplant, {
@@ -92,10 +96,11 @@ ciplot <- function(x,
                    lty.ci = par('lty'), lwd.ci = par('lwd'),
                    
                    events = TRUE, atrisk = TRUE, events.total = TRUE,
-                   wh.events = c('events', 'est', 'est.sd', 'est.ci'),
+                   wh.events = c('events', 'est', 'est.sd', 'est.ci', 'atrisk'),
                    events.lab = NULL,
                    events.digits = 3L,
                    events.lines = TRUE, events.col = FALSE,
+                   include_censored = FALSE,
                    
                    main = NULL,
                    xlab = 'Time', ylab = 'Probability',
@@ -249,7 +254,8 @@ ciplot <- function(x,
           events = 'Cumulative events',
           est    = 'Estimate',
           est.sd = 'Estimate +/- Std. dev',
-          est.ci = 'Estimate [LCI, UCI]'
+          est.ci = 'Estimate [LCI, UCI]',
+          atrisk = 'Number at risk'
         )
       else events.lab
       
@@ -299,7 +305,8 @@ ciplot <- function(x,
       est.sd = timepoints2(x, times = events.at, sd = TRUE, html = FALSE,
                            ci = FALSE, digits = events.digits),
       est.ci = timepoints2(x, times = events.at, sd = FALSE, html = FALSE,
-                           ci = TRUE, digits = events.digits)
+                           ci = TRUE, digits = events.digits),
+      atrisk = summary(x, times = events.at)$atrisk
     )
     
     d1 <- data.frame(time = rep(as.numeric(colnames(ss)), each = nrow(ss)),
@@ -312,7 +319,9 @@ ciplot <- function(x,
     if (atrisk)
       d2 <- c(d2, list('At-risk' = data.frame(
         time = as.numeric(colnames(ss)),
-        n.risk = summary(x, times = events.at)$total_atrisk,
+        n.risk = if (include_censored)
+          summary(x, times = events.at)$total_atrisk
+        else summary(x, times = events.at)$atrisk_sum,
         strata = 'At-risk',
         stringsAsFactors = FALSE
       )))
