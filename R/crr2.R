@@ -134,7 +134,11 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   rhs <- if (attr(term, 'dots'))
     setdiff(names(data), lhs) else form[[1L]][-(1:2)]
   
-  status   <- levels(as.factor(data[, lhs[2L]]))
+  # data.frame class uses "drop = TRUE" by default in single-bracket subsetting
+  # but tbl_df class uses "drop = FALSE" by default. 
+  # Added "drop = TRUE" argument throughout code since many of these single-bracket 
+  # subsets are expecting a vector; will make code compatible with tbl_df. 
+  status   <- levels(as.factor(data[, lhs[2L], drop = TRUE]))
   cencode  <- cencode  %||% form[[2L]][1L]
   failcode <- failcode %||% form[[2L]][2L]
   
@@ -145,14 +149,14 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
               toString(shQuote(wh)), shQuote(name)),
       call. = FALSE
     )
-  if (any(wh <- c(cencode, failcode) %ni% data[, lhs[2L]]))
+  if (any(wh <- c(cencode, failcode) %ni% data[, lhs[2L], drop = TRUE]))
     warning(
       sprintf('%s not found in %s[, %s]',
               toString(shQuote(c(cencode, failcode)[wh])),
               deparse(name), shQuote(form[[1L]][2L])),
       call. = FALSE
     )
-  if (length(wh <- unique(data[, lhs[2L]])) <= 2L)
+  if (length(wh <- unique(data[, lhs[2L], drop = TRUE])) <= 2L)
     warning(
       gsub('\\n\\s{2,}', ' ',
            sprintf('Only %s found in in %s[, %s]\n Typically, censoring,
@@ -196,7 +200,7 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
     
     ## substitute to get a more helpful call -- can run crr directly
     call <- substitute(
-      crr(data[, ftime], data[, fstatus],
+      crr(data[, ftime, drop = TRUE], data[, fstatus, drop = TRUE],
           cov1 = model.matrix(formula, data)[, -1L, drop = FALSE],
           cencode = cencode, failcode = x, variance = variance,
           cengroup = cengroup, gtol = gtol, maxiter = maxiter, init = init),
@@ -210,7 +214,7 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
     else call$cengroup
     
     fit <- substitute(
-      crr(data[, ftime], data[, fstatus], cov1 = mm,
+      crr(data[, ftime, drop = TRUE], data[, fstatus, drop = TRUE], cov1 = mm,
           cencode = cencode, failcode = x, variance = variance,
           cengroup = cengroup, gtol = gtol, maxiter = maxiter, init = init),
       list(ftime = ftime, fstatus = fstatus, cencode = cencode,
@@ -220,11 +224,11 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
     fit <- eval(fit)
     fit$call <- call
     
-    fit$nuftime   <- c(table(data[data[, fstatus] %in% x, ftime]))
+    fit$nuftime   <- c(table(data[data[, fstatus, drop = TRUE] %in% x, ftime]))
     fit$n.missing <- n
     
     ## get n for reference group and events per model term
-    fc <- +(data[, fstatus] %in% x)
+    fc <- +(data[, fstatus, drop = TRUE] %in% x)
     ns <- lapply(seq_along(mf), function(ii) {
       x <- mf[, ii]
       x <- if (is.factor(x) || is.character(x)) {
@@ -537,7 +541,7 @@ finegray2 <- function(formula, data, cencode, ...) {
   rhs <- if ('.' %in% term)
     setdiff(names(data), c(svar, tvar)) else term[-(1:2)]
   
-  status  <- sort(unique(data[, svar]))
+  status  <- sort(unique(data[, svar, drop = TRUE]))
   cencode <- if (missing(cencode))
     unique(grep('(?i)0|censor', status, value = TRUE)) else cencode
   crisks  <- setdiff(status, cencode)
@@ -548,7 +552,7 @@ finegray2 <- function(formula, data, cencode, ...) {
     length(crisks)  >= 2L
   )
   
-  data[, svar] <- factor(data[, svar], c(cencode, crisks))
+  data[, svar, drop = TRUE] <- factor(data[, svar, drop = TRUE], c(cencode, crisks))
   
   fg <- lapply(crisks, function(x) {
     do.call(
