@@ -1,9 +1,8 @@
 ### formula method for cuminc
-# cuminc2, print.cuminc2, summary.cuminc2, split_cuminc, cuminc_pairs,
-# timepoints2
+# cuminc2, print.cuminc2, summary.cuminc2, cuminc_pairs, timepoints2
 # 
 # unexported:
-# get_events, gy_pval, gy_text, pw_pval, pw_text, name_or_index
+# get_events, gy_pval, gy_text, split_cuminc, pw_pval, pw_text, name_or_index
 ###
 
 
@@ -22,6 +21,10 @@
 #' @param rho,cencode,subset,na.action passed to \code{\link[cmprsk]{cuminc}};
 #' the censoring indicator will be guessed from \code{formula} but may be
 #' overridden by \code{cencode}
+#' 
+#' @seealso
+#' \code{\link{summary.cuminc2}}; \code{\link{plot.cuminc2}};
+#' \code{\link[cmprsk]{cuminc}}; 
 #' 
 #' @examples
 #' tp <- within(transplant, {
@@ -55,7 +58,6 @@
 #'   cuminc2(form, tp)$cuminc,
 #'   with(tp, cuminc(futime, event_ind, sex, abo))
 #' )
-#' 
 #' 
 #' @export
 
@@ -208,12 +210,15 @@ summary.cuminc2 <- function(object, times = NULL, digits = 5L, ...) {
   ## "atrisk"
   total_atrisk <- object$cuminc2[order(object$cuminc2$time), ]
   total_atrisk <- get_events(NULL, total_atrisk$time, times, TRUE)
-  # res <- c(total_events) - res
+  atrisk <- c(total_events) - res
+  # atrisk <- rbind(atrisk, Censored = total_atrisk - colSums(atrisk))
   
   l <- list(
     events = res, total_events = total_events,
     total_groups = c(table(object$cuminc2$group)),
-    total_atrisk = total_atrisk
+    atrisk = atrisk, atrisk_sum = colSums(atrisk),
+    total_atrisk = total_atrisk,
+    total_censored = total_atrisk - colSums(atrisk)
   )
   
   c(tp, l)
@@ -266,11 +271,11 @@ gy_text <- function(x, ..., details = TRUE) {
   
   # bquote(paste(chi^2, ' = ', .(txt)))
   if (details)
-    txt
-  else setNames(pvalr(x[, 'pv'], show.p = TRUE), rownames(x))
+    txt else setNames(pvalr(x[, 'pv'], show.p = TRUE), rownames(x))
 }
 
 split_cuminc <- function(x, wh = c('event', 'group'), ws_split = 'last') {
+  ## split (ie, hack) cuminc objects by event or group levels
   c2 <- inherits(x, 'cuminc2')
   sp_str <- switch(
     ws_split,
@@ -295,42 +300,44 @@ split_cuminc <- function(x, wh = c('event', 'group'), ws_split = 'last') {
   
   wh <- match.arg(wh)
   
-  switch(wh,
-         event = {
-           xx_ev <- lapply(ev, function(ii) {
-             tmp <- list(cuminc = xx[grep(ii, names(xx), fixed = TRUE)])
-             
-             if (gy)
-               tmp$cuminc$Tests <- ci$Tests[grep(ii, rownames(ci$Tests)), , drop = FALSE]
-             
-             if (c2) {
-               cc  <- as.character(x$cuminc2$cencode[1L])
-               dat <- x$cuminc2[x$cuminc2[, 'status'] %in% c(ii, cc), ]
-               tmp <- c(tmp, list(cuminc2 = droplevels(dat)))
-             }
-             
-             if (c2)
-               structure(tmp, class = 'cuminc2') else tmp
-           })
-           
-           setNames(xx_ev, ev)
-         },
-         
-         group = {
-           xx_gr <- lapply(gr, function(ii) {
-             tmp <- list(cuminc = xx[grep(ii, names(xx), fixed = TRUE)])
-             
-             if (c2) {
-               dat <- x$cuminc2[x$cuminc2[, 'group'] %in% ii, ]
-               tmp <- c(tmp, list(cuminc2 = droplevels(dat)))
-             }
-             
-             if (c2)
-               structure(tmp, class = 'cuminc2') else tmp
-           })
-           
-           setNames(xx_gr, gr)
-         }
+  switch(
+    wh,
+    event = {
+      
+      xx_ev <- lapply(ev, function(ii) {
+        tmp <- list(cuminc = xx[grep(ii, names(xx), fixed = TRUE)])
+        
+        if (gy)
+          tmp$cuminc$Tests <- ci$Tests[grep(ii, rownames(ci$Tests)), , drop = FALSE]
+        
+        if (c2) {
+          cc  <- as.character(x$cuminc2$cencode[1L])
+          dat <- x$cuminc2[x$cuminc2[, 'status'] %in% c(ii, cc), ]
+          tmp <- c(tmp, list(cuminc2 = droplevels(dat)))
+        }
+        
+        if (c2)
+          structure(tmp, class = 'cuminc2') else tmp
+      })
+      
+      setNames(xx_ev, ev)
+    },
+    
+    group = {
+      xx_gr <- lapply(gr, function(ii) {
+        tmp <- list(cuminc = xx[grep(ii, names(xx), fixed = TRUE)])
+        
+        if (c2) {
+          dat <- x$cuminc2[x$cuminc2[, 'group'] %in% ii, ]
+          tmp <- c(tmp, list(cuminc2 = droplevels(dat)))
+        }
+        
+        if (c2)
+          structure(tmp, class = 'cuminc2') else tmp
+      })
+      
+      setNames(xx_gr, gr)
+    }
   )
 }
 
@@ -382,6 +389,7 @@ cuminc_pairs <- function(object, data = NULL, rho = 0, cencode = NULL,
     inherits(object, c('cuminc2', 'formula'))
   )
   
+  ## pairwise gray tests
   pwgray <- function(i, j, k) {
     force(k)
     data <- data[data[, 'group'] %in% c(unq[i], unq[j]), ]
@@ -500,10 +508,10 @@ pw_text <- function(formula, data, ..., details = TRUE, pFUN = NULL,
 
 name_or_index <- function(x, y = NULL) {
   ## return integer vector where x occurs in y
-  ## cmprsk2:::name_or_index(c('1', '3', 'e'))
-  ## cmprsk2:::name_or_index(c('a', 'c', 'e'), letters)
-  ## table is given priority over integer, eg, idx = 27 instead of 4
-  ## cmprsk2:::name_or_index(c('a', '4', 'e'), c(letters, '4'))
+  # cmprsk2:::name_or_index(c('1', '3', 'e'))
+  # cmprsk2:::name_or_index(c('a', 'c', 'e'), letters)
+  # table is given priority over integer, eg, idx = 27 instead of 4
+  # cmprsk2:::name_or_index(c('a', '4', 'e'), c(letters, '4'))
   suppressWarnings(
     ix <- as.integer(x)
   )

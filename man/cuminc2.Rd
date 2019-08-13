@@ -58,5 +58,8 @@ identical(
   with(tp, cuminc(futime, event_ind, sex, abo))
 )
 
-
+}
+\seealso{
+\code{\link{summary.cuminc2}}; \code{\link{plot.cuminc2}};
+\code{\link[cmprsk]{cuminc}};
 }
