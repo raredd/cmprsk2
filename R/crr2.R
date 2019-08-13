@@ -552,7 +552,7 @@ finegray2 <- function(formula, data, cencode, ...) {
     length(crisks)  >= 2L
   )
   
-  data[, svar, drop = TRUE] <- factor(data[, svar, drop = TRUE], c(cencode, crisks))
+  data[, svar] <- factor(data[, svar, drop = TRUE], c(cencode, crisks))
   
   fg <- lapply(crisks, function(x) {
     do.call(

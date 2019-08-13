@@ -71,19 +71,19 @@ test_that('crr2/cuminc2 formulas are properly parsed', {
   
   
   ## data
-  expect_error(
+  expect_warning(
     parse_formula(f2, tp),
     regexp = '0.*not found.*tp.*event'
   )
   
-  expect_error(
+  expect_warning(
     parse_formula(f4, tp),
     regexp = 'censor.*deaths.*not found.*tp.*event'
   )
   
   expect_error(
     parse_formula(f6, tp),
-    regexp = 'numeric'
+    regexp = 'numeric values >= 0'
   )
   
 })
