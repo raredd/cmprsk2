@@ -93,9 +93,9 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
   group  <- if (!length(form$rhs))
     rep_len(1L, nr) else do.call('interaction', data[, form$rhs, drop = FALSE])
   strata <- if (is.null(form$strata))
-    rep_len(1L, nr) else data[, form$strata]
+    rep_len(1L, nr) else data[, form$strata, drop = TRUE]
   
-  ci <- cuminc(data[, form$ftime], data[, form$fstatus],
+  ci <- cuminc(data[, form$ftime, drop = TRUE], data[, form$fstatus, drop = TRUE],
                as.factor(group), as.factor(strata),
                rho, cencode %||% form$cencode, rep_len(TRUE, nr), na.action)
   ci <- list(
@@ -384,7 +384,7 @@ cuminc_pairs <- function(object, data = NULL, rho = 0, cencode = NULL,
   
   pwgray <- function(i, j, k) {
     force(k)
-    data <- data[data[, 'group'] %in% c(unq[i], unq[j]), ]
+    data <- data[data[, 'group', drop = TRUE] %in% c(unq[i], unq[j]), ]
     form <- sprintf('Surv(time, status(%s)) ~ group', form$cencode)
     form <- as.formula(form)
     ci <- cuminc2(form, data, rho, cencode)
@@ -423,12 +423,12 @@ cuminc_pairs <- function(object, data = NULL, rho = 0, cencode = NULL,
   
   data <- droplevels(object[['cuminc2']])
   form <- parse_formula(attr(object, 'call')$formula)
-  unq  <- levels(as.factor(data[, 'group']))
+  unq  <- levels(as.factor(data[, 'group', drop = TRUE]))
   ngy  <- nrow(object[['cuminc']]$Tests)
-  crs  <- setdiff(levels(as.factor(data[, 'status'])), form$cencode)
+  crs  <- setdiff(levels(as.factor(data[, 'status', drop = TRUE])), form$cencode)
   
   nn <- outer(as.character(unq), as.character(unq), Vectorize(function(x, y)
-    nrow(data[data[, 'group'] %in% c(x, y), ])))
+    nrow(data[data[, 'group', drop = TRUE] %in% c(x, y), ])))
   nn[upper.tri(nn, FALSE)] <- NA
   dimnames(nn) <- list(unq, unq)
   

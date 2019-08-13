@@ -134,14 +134,14 @@ parse_formula <- function(formula, data = NULL, name = NULL) {
                 toString(shQuote(vars)), shQuote(dname))
       )
     
-    if (!is.numeric(na.omit(data[, ftime])) |
-        any(na.omit(data[, ftime]) < 0))
+    if (!is.numeric(na.omit(data[, ftime, drop = TRUE])) |
+        any(na.omit(data[, ftime, drop = TRUE]) < 0))
       stop(
-        sprintf('%s should be numeric values > 0', shQuote(ftime))
+        sprintf('%s should be numeric values >= 0', shQuote(ftime))
       )
     
     codes <- c(cencode, failcode)
-    if (length(codes <- codes[codes %ni% data[, fstatus]]))
+    if (length(codes <- codes[codes %ni% data[, fstatus, drop = TRUE]]))
       warning(
         sprintf('%s not found in %s[, %s]',
                 toString(shQuote(codes)), dname, shQuote(fstatus))
