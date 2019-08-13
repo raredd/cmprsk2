@@ -8,26 +8,28 @@
 ciplot(x, col.ci = seq_along(xx), lty.ci = par("lty"),
   lwd.ci = par("lwd"), events = TRUE, atrisk = TRUE,
   events.total = TRUE, wh.events = c("events", "est", "est.sd",
-  "est.ci"), events.lab = NULL, events.digits = 3L,
-  events.lines = TRUE, events.col = FALSE, main = NULL,
-  xlab = "Time", ylab = "Probability", groups.lab = names(xx),
-  xlim = NULL, ylim = NULL, cex.axis = par("cex.axis"),
-  gy_test = TRUE, test_details = TRUE, legend.args = list(),
-  split = FALSE, xaxis.at = pretty(xlim), yaxis.at = pretty(ylim),
-  xaxis.lab = xaxis.at, yaxis.lab = yaxis.at, events.at = xaxis.at,
+  "est.ci", "atrisk"), events.lab = NULL, events.digits = 3L,
+  events.lines = TRUE, events.col = FALSE, include_censored = FALSE,
+  main = NULL, xlab = "Time", ylab = "Probability",
+  groups.lab = names(xx), xlim = NULL, ylim = NULL,
+  cex.axis = par("cex.axis"), gy_test = TRUE, test_details = TRUE,
+  legend.args = list(), split = FALSE, xaxis.at = pretty(xlim),
+  yaxis.at = pretty(ylim), xaxis.lab = xaxis.at,
+  yaxis.lab = yaxis.at, events.at = xaxis.at,
   groups.order = seq_along(xx), extra.margin = 5L, mar = NULL,
   add = FALSE, panel.first = NULL, panel.last = NULL, ...)
 
 \method{plot}{cuminc2}(x, col.ci = seq_along(xx), lty.ci = par("lty"),
   lwd.ci = par("lwd"), events = TRUE, atrisk = TRUE,
   events.total = TRUE, wh.events = c("events", "est", "est.sd",
-  "est.ci"), events.lab = NULL, events.digits = 3L,
-  events.lines = TRUE, events.col = FALSE, main = NULL,
-  xlab = "Time", ylab = "Probability", groups.lab = names(xx),
-  xlim = NULL, ylim = NULL, cex.axis = par("cex.axis"),
-  gy_test = TRUE, test_details = TRUE, legend.args = list(),
-  split = FALSE, xaxis.at = pretty(xlim), yaxis.at = pretty(ylim),
-  xaxis.lab = xaxis.at, yaxis.lab = yaxis.at, events.at = xaxis.at,
+  "est.ci", "atrisk"), events.lab = NULL, events.digits = 3L,
+  events.lines = TRUE, events.col = FALSE, include_censored = FALSE,
+  main = NULL, xlab = "Time", ylab = "Probability",
+  groups.lab = names(xx), xlim = NULL, ylim = NULL,
+  cex.axis = par("cex.axis"), gy_test = TRUE, test_details = TRUE,
+  legend.args = list(), split = FALSE, xaxis.at = pretty(xlim),
+  yaxis.at = pretty(ylim), xaxis.lab = xaxis.at,
+  yaxis.lab = yaxis.at, events.at = xaxis.at,
   groups.order = seq_along(xx), extra.margin = 5L, mar = NULL,
   add = FALSE, panel.first = NULL, panel.last = NULL, ...)
 }
@@ -48,8 +50,8 @@ control, use a specific x-coordinate}
 \item{wh.events}{a character string giving the type of \code{events} table
 to show; one of \code{"events"} (cumulative number of events), \code{"est"}
 (estimates, see \code{\link[cmprsk]{timepoints}}), \code{"est.sd"} (estimate
-+/- standard deviation), or \code{"est.ci"} (estimate with confidence
-inverval)}
++/- standard deviation), \code{"est.ci"} (estimate with confidence
+inverval), or \code{"atrisk"} (event at-risk table with censored)}
 
 \item{events.lab}{heading for events table}
 
@@ -60,6 +62,10 @@ inverval)}
 
 \item{events.col}{logical or a vector with colors for events table text;
 if \code{TRUE}, \code{col.ci} will be used}
+
+\item{include_censored}{logical; if \code{TRUE}, censored patients are
+included in at-risk counts (may not be desired); the default (\code{FALSE})
+will only sum the at-risk table rows}
 
 \item{main}{title of plot}
 
@@ -140,5 +146,6 @@ plot(ci2, wh.events = 'est', events.digits = 2, groups.order = c(2,1,3))
 
 }
 \seealso{
-\code{\link{cuminc2}}; \code{\link{summary.cuminc2}}
+\code{\link{ciplot_by}}; \code{\link{cuminc2}};
+\code{\link{summary.cuminc2}}; \code{\link[cmprsk]{cuminc}}
 }

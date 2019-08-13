@@ -1,6 +1,7 @@
 ### utils
-# %||%, %inside%, %ni%, assert_class, islist, is.loaded, nth, parse_formula,
-# pvalr, color_pval, strata, terms.inner, sterms.inner, trimwsq
+# %||%, %inside%, %ni%, assert_class, catlist, islist, is.loaded, nth,
+# parse_formula, pvalr, color_pval, rescaler, roundr, strata, terms.inner,
+# sterms.inner, trimwsq
 # 
 # formula s3 methods:
 # is.crr2, is.crr2.default, is.crr2.formula, is.cuminc2, is.cuminc2.default,
@@ -9,20 +10,25 @@
 
 
 `%||%` <- function(x, y) {
-  if (is.null(x) || !length(x)) y else x
+  ## return y if x is null
+  if (is.null(x) || !length(x))
+    y else x
 }
 
 `%inside%` <- function(x, interval) {
+  ## check if x is weakly inside interval
   interval <- sort(interval)
   x >= interval[1L] & x <= interval[2L]
 }
 
 `%ni%` <- function(x, table) {
+  ## negation of %in%
   !(match(x, table, nomatch = 0L) > 0L)
 }
 
 assert_class <- function(x, class, which = FALSE,
                          message = NULL, warn = FALSE) {
+  ## checking classes
   name <- substitute(x)
   FUN <- if (warn)
     warning else stop
@@ -39,10 +45,12 @@ assert_class <- function(x, class, which = FALSE,
 }
 
 catlist <- function(x) {
+  ## concatenate a list to print
   paste0(paste(names(x), x, sep = ' = ', collapse = ', '))
 }
 
 is.crr2 <- function(x) {
+  ## method to validate crr2 objects, formulae
   if (inherits(x, 'crr2'))
     return(TRUE)
   UseMethod('is.crr2')
@@ -67,6 +75,7 @@ is.crr2.formula <- function(x) {
 }
 
 is.cuminc2 <- function(x) {
+  ## method to validate cuminc2 objects, formulae
   if (inherits(x, 'cuminc2'))
     return(TRUE)
   UseMethod('is.cuminc2')
@@ -89,17 +98,20 @@ is.cuminc2.formula <- function(x) {
 }
 
 islist <- function(x) {
-  ## is.list(data.frame()) returns TRUE
+  ## more explicit is.list (is.list(data.frame()) returns TRUE)
   inherits(x, 'list')
 }
 
 is.loaded <- function(package) {
+  ## accepts strings or ?name (base::is.loaded does not)
+  ## otherwise, cannot remember the use of this
   package <- if (is.character(substitute(package)))
     package else deparse(substitute(package))
   any(grepl(sprintf('package:%s', package), search()))
 }
 
 parse_formula <- function(formula, data = NULL, name = NULL) {
+  ## parse crr2/cuminc2 formulae into useful pieces
   if (!(is.crr2(formula) | is.cuminc2(formula)))
     stop(
       'Invalid formula - see ?crr2 or ?cuminc2 for deatails'
@@ -164,7 +176,7 @@ parse_formula <- function(formula, data = NULL, name = NULL) {
 
 pvalr <- function(pv, sig.limit = 0.001, digits = 3L, html = FALSE,
                   show.p = FALSE, journal = TRUE, ...) {
-  ## rawr::pvalr
+  ## rawr::pvalr -- format p-values for printing
   stopifnot(
     sig.limit > 0,
     sig.limit < 1
@@ -196,7 +208,7 @@ color_pval <- function(pvals, breaks = c(0, .01, .05, .1, .5, 1),
                        cols = colorRampPalette(2:1)(length(breaks)),
                        sig.limit = 0.001, digits = 3L, show.p = FALSE,
                        format_pval = TRUE) {
-  ## rawr::color_pval
+  ## rawr::color_pval -- format and color p-values for html tables
   if (!is.numeric(pvals))
     return(pvals)
   pvn <- pvals
@@ -217,9 +229,11 @@ color_pval <- function(pvals, breaks = c(0, .01, .05, .1, .5, 1),
 }
 
 nth <- function(x, p, n = NULL, keep_split = FALSE, repl = '$$$', ...) {
+  ## split a string, s, at the n-th occurrence of a pattern, p
   # s <- 'this  is a  test string to use   for testing   purposes'
   # nth(s, '\\s+')
   # nth(s, '\\s+', 3)
+  # nth(s, '\\s{2,}', 3) ## compare
   # nth(s, '\\s+', c(3, 5))
   # nth(s, '\\s+', c(3, 5), keep_split = TRUE)
   # nth(s, '\\s{2,}', keep_split = TRUE)
@@ -241,14 +255,18 @@ nth <- function(x, p, n = NULL, keep_split = FALSE, repl = '$$$', ...) {
 }
 
 rescaler <- function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
+  ## stripped version of scales::rescale
   (x - from[1L]) / diff(from) * diff(to) + to[1L]
 }
 
 roundr <- function(x, digits = 1L) {
+  ## round without dropping trailing 0s (returns character strings)
   sprintf('%.*f', digits, x)
 }
 
 strata <- function(formula) {
+  ## extract strata from formula
+  # strata(y ~ x); strata(y ~ strata(x))
   formula <- deparse(formula)
   strata  <- trimws(gsub('strata\\s*\\(([^)]+)|.', '\\1', formula))
   if (nzchar(strata))
@@ -256,7 +274,7 @@ strata <- function(formula) {
 }
 
 terms.inner <- function(x, survival = FALSE) {
-  ## survival:::terms.inner with modifications
+  ## survival:::terms.inner with modifications for crr2/cuminc2 formulae
   if (inherits(x, 'formula')) {
     if (length(x) == 3L) {
       if (!(is.crr2(x) | is.cuminc2(x))) {
@@ -308,5 +326,6 @@ sterms.inner <- function(x) {
 }
 
 trimwsq <- function(x) {
+  ## trim white space and quotes
   gsub('^[\'\" \t\r\n]*|[\'\" \t\r\n]*$', '', x)
 }
