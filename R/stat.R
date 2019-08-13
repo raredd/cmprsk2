@@ -221,31 +221,33 @@ terms.crr <- terms.crr2
 #' 
 #' ## model selection
 #' m2 <- with(bmt, crr(ftime, Status, cov1[, c(4:6)]))
-#' m3 <- with(bmt, crr(ftime, Status, cov1[, c(4:6,7)]))
-#' m4 <- with(bmt, crr(ftime, Status, cov1[, c(4:6,7,1)]))
-#' m5 <- with(bmt, crr(ftime, Status, cov1[, c(4:6,7,2)]))
-#' m6 <- with(bmt, crr(ftime, Status, cov1[, c(4:6,7,3)]))
+#' m3 <- with(bmt, crr(ftime, Status, cov1[, c(4:6, 7)]))
+#' m4 <- with(bmt, crr(ftime, Status, cov1[, c(4:6, 7, 1)]))
+#' m5 <- with(bmt, crr(ftime, Status, cov1[, c(4:6, 7, 2)]))
+#' m6 <- with(bmt, crr(ftime, Status, cov1[, c(4:6, 7, 3)]))
 #' 
 #' crrFits(m1, m2, m3, m4, m5, m6, p = 3)
 #' 
 #' 
-#' par(mfrow = c(2,2))
+#' par(mfrow = c(2, 2))
 #' with(m2, {
 #'   for (ii in seq.int(ncol(res)))
-#'     scatter.smooth(uftime, res[, ii],
-#'                    main = gsub('Phase', '', names(coef)[ii]),
-#'                    xlab = 'Failure time',
-#'                    ylab = 'Schoenfeld residuals')
+#'     scatter.smooth(uftime, res[, ii], main = names(coef)[ii],
+#'                    xlab = 'Failure time', ylab = 'Schoenfeld residuals')
 #' })
 #' 
 #' pred <- with(bmt, model.matrix(~ levels(Phase)))[, -1L]
 #' pred <- predict(m2, pred)
 #' 
-#' plot(pred, xlab = 'Failure time', ylab = 'CIF', col = 1:4, lty = 1,
-#'      ylim = c(0, 1))
-#' legend('top', lty = 1L, col = 1:4, horiz = TRUE, bty = 'n',
-#'        title = 'Phase', legend = levels(bmt$Phase),
-#'        x.intersp = 0.1, y.intersp = 0.5)
+#' plot(
+#'   pred, col = 1:4, lty = 1, ylim = c(0, 1),
+#'   xlab = 'Failure time', ylab = 'CIF'
+#' )
+#' legend(
+#'   'top', lty = 1L, col = 1:4, horiz = TRUE, bty = 'n',
+#'   title = 'Phase', legend = levels(bmt$Phase),
+#'   x.intersp = 0.1, y.intersp = 0.5
+#' )
 #' }
 #' 
 #' @export
