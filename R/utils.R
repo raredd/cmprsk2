@@ -128,6 +128,8 @@ parse_formula <- function(formula, data = NULL, name = NULL) {
   
   strata <- strata(formula)
   rhs    <- setdiff(rhs, strata) %||% NULL
+  rhs    <- if (is.null(strata))
+    rhs else setdiff(rhs, 'strata')
   
   ftime   <- lhs[1L]
   fstatus <- lhs[2L]
@@ -197,8 +199,8 @@ pvalr <- function(pv, sig.limit = 0.001, digits = 3L, html = FALSE,
              format.pval(sig.limit, ...))
     } else {
       nd <- if (journal)
-        c(digits, 2L)[findInterval(x, c(-Inf, .1, Inf))]
-      else c(digits, 2L, 1L)[findInterval(x, c(-Inf, .1, .5, Inf))]
+        c(digits, 2L)[findInterval(x, c(-Inf, 0.1, Inf))]
+      else c(digits, 2L, 1L)[findInterval(x, c(-Inf, 0.1, 0.5, Inf))]
       paste0(c('', 'p = ')[show.p], roundr(x, nd))
     }
   }, sig.limit)
@@ -231,13 +233,13 @@ color_pval <- function(pvals, breaks = c(0, .01, .05, .1, .5, 1),
 nth <- function(x, p, n = NULL, keep_split = FALSE, repl = '$$$', ...) {
   ## split a string, s, at the n-th occurrence of a pattern, p
   # s <- 'this  is a  test string to use   for testing   purposes'
-  # nth(s, '\\s+')
-  # nth(s, '\\s+', 3)
-  # nth(s, '\\s{2,}', 3) ## compare
-  # nth(s, '\\s+', c(3, 5))
-  # nth(s, '\\s+', c(3, 5), keep_split = TRUE)
-  # nth(s, '\\s{2,}', keep_split = TRUE)
-  # nth(s, '\\s{2,}', 2:4)
+  # cmprsk2:::nth(s, '\\s+')
+  # cmprsk2:::nth(s, '\\s+', 3)
+  # cmprsk2:::nth(s, '\\s{2,}', 3) ## compare
+  # cmprsk2:::nth(s, '\\s+', c(3, 5))
+  # cmprsk2:::nth(s, '\\s+', c(3, 5), keep_split = TRUE)
+  # cmprsk2:::nth(s, '\\s{2,}', keep_split = TRUE)
+  # cmprsk2:::nth(s, '\\s{2,}', 2:4)
   stopifnot(
     is.character(x),
     is.character(p),
@@ -266,10 +268,16 @@ roundr <- function(x, digits = 1L) {
 
 strata <- function(formula) {
   ## extract strata from formula
-  # strata(y ~ x); strata(y ~ strata(x))
+  # cmprsk2:::strata(y ~ x)
+  # cmprsk2:::strata(y ~ strata(x))
+  # cmprsk2:::strata(y ~ a + b + strata  (x) + strata( z ) + c)
   formula <- deparse(formula)
-  strata  <- trimws(gsub('strata\\s*\\(([^)]+)|.', '\\1', formula))
-  if (nzchar(strata))
+  formula <- paste0(formula, collapse = '')
+  
+  m <- gregexpr('strata\\s*\\(\\K([^)]+)', formula, perl = TRUE)
+  strata <- trimws(regmatches(formula, m)[[1L]])
+  
+  if (length(strata))
     strata else NULL
 }
 
