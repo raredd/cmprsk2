@@ -124,23 +124,23 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
       call. = FALSE
     )
   
-  term <- terms.inner(formula)
-  form <- rapply(term, trimwsq, how = 'list')
+  form <- parse_formula(formula)
   name <- substitute(data)
   Name <- if (length(name) > 1L)
     as.list(name)[[2L]] else name
   
-  lhs <- form[[1L]][1:2]
-  rhs <- if (attr(term, 'dots'))
-    setdiff(names(data), lhs) else form[[1L]][-(1:2)]
+  lhs <- form$lhs
+  rhs <- form$rhs
   
   # data.frame class uses "drop = TRUE" by default in single-bracket subsetting
   # but tbl_df class uses "drop = FALSE" by default. 
   # Added "drop = TRUE" argument throughout code since many of these single-bracket 
   # subsets are expecting a vector; will make code compatible with tbl_df. 
-  status   <- levels(as.factor(data[, lhs[2L], drop = TRUE]))
-  cencode  <- cencode  %||% form[[2L]][1L]
-  failcode <- failcode %||% form[[2L]][2L]
+  status   <- levels(as.factor(data[, form$fstatus, drop = TRUE]))
+  # cencode  <- cencode  %||% form[[2L]][1L]
+  # failcode <- failcode %||% form[[2L]][2L]
+  cencode  <- cencode  %||% form$cencode
+  failcode <- failcode %||% form$failcode
   
   if (length(wh <- setdiff(c(lhs, rhs), names(data))))
     stop(
@@ -149,19 +149,19 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
               toString(shQuote(wh)), shQuote(name)),
       call. = FALSE
     )
-  if (any(wh <- c(cencode, failcode) %ni% data[, lhs[2L], drop = TRUE]))
+  if (any(wh <- c(cencode, failcode) %ni% data[, form$fstatus, drop = TRUE]))
     warning(
       sprintf('%s not found in %s[, %s]',
               toString(shQuote(c(cencode, failcode)[wh])),
-              deparse(name), shQuote(form[[1L]][2L])),
+              deparse(name), shQuote(form$fstatus)),
       call. = FALSE
     )
-  if (length(wh <- unique(data[, lhs[2L], drop = TRUE])) <= 2L)
+  if (length(wh <- unique(data[, form$fstatus, drop = TRUE])) <= 2L)
     warning(
       gsub('\\n\\s{2,}', ' ',
            sprintf('Only %s found in in %s[, %s]\n Typically, censoring,
                    event of interest, and >=1 competing event are used',
-                   toString(shQuote(wh)), deparse(name), shQuote(form[[1L]][2L]))
+                   toString(shQuote(wh)), deparse(name), shQuote(form$fstatus))
       ),
       call. = FALSE
     )
@@ -195,8 +195,8 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   init <- rep_len(if (is.null(init)) 0L else init, ncol(mm))
   
   crrs <- lapply(crisks, function(x) {
-    ftime   <- lhs[1L]
-    fstatus <- lhs[2L]
+    ftime   <- form$ftime
+    fstatus <- form$fstatus
     
     ## substitute to get a more helpful call -- can run crr directly
     call <- substitute(
@@ -267,7 +267,7 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   ## coxph model with any competing event vs censored
   formula <- if (isTRUE(cox)) {
     sprintf('Surv(%s, %s %%in%% c(%s)) ~ %s',
-            lhs[1L], lhs[2L], toString(shQuote(crisks)),
+            form$ftime, form$fstatus, toString(shQuote(crisks)),
             paste(deparse(formula[[3L]]), collapse = ''))
   } else cox
   formula <- as.formula(formula)
