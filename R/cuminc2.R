@@ -97,9 +97,14 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
   strata <- if (is.null(form$strata))
     rep_len(1L, nr) else interaction(data[, form$strata, drop = TRUE])
   
-  ci <- cuminc(data[, form$ftime, drop = TRUE], data[, form$fstatus, drop = TRUE],
-               as.factor(group), as.factor(strata),
-               rho, cencode %||% form$cencode, rep_len(TRUE, nr), na.action)
+  group  <- droplevels(as.factor(group))
+  strata <- droplevels(as.factor(strata))
+  
+  ci <- cuminc(
+    data[, form$ftime, drop = TRUE], data[, form$fstatus, drop = TRUE],
+    group, strata, rho, cencode %||% form$cencode, rep_len(TRUE, nr), na.action
+  )
+  
   ci <- list(
     cuminc  = ci,
     cuminc2 = setNames(
