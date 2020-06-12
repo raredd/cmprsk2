@@ -4,10 +4,26 @@
 \alias{ciplot_by}
 \title{ciplot_by}
 \usage{
-ciplot_by(rhs = "1", event, data, by = NULL, single = TRUE,
-  cencode = NULL, gy_test = TRUE, main = NULL, ylab = NULL,
-  sub = NULL, groups_lab = NULL, fig_lab = NULL, col.ci = NULL,
-  map.col = FALSE, time = NULL, add = FALSE, plot = TRUE, ...)
+ciplot_by(
+  rhs = "1",
+  event,
+  data,
+  by = NULL,
+  single = TRUE,
+  cencode = NULL,
+  gy_test = TRUE,
+  main = NULL,
+  ylab = NULL,
+  sub = NULL,
+  groups_lab = NULL,
+  fig_lab = NULL,
+  col.ci = NULL,
+  map.col = FALSE,
+  time = NULL,
+  add = FALSE,
+  plot = TRUE,
+  ...
+)
 }
 \arguments{
 \item{rhs}{the right-hand side of the formula}

@@ -4,9 +4,19 @@
 \alias{crr2}
 \title{Competing risks regression}
 \usage{
-crr2(formula, data, which = NULL, cox = FALSE, variance = TRUE,
-  cengroup = NULL, failcode = NULL, cencode = NULL, gtol = 1e-06,
-  maxiter = 10, init = NULL)
+crr2(
+  formula,
+  data,
+  which = NULL,
+  cox = FALSE,
+  variance = TRUE,
+  cengroup = NULL,
+  failcode = NULL,
+  cencode = NULL,
+  gtol = 1e-06,
+  maxiter = 10,
+  init = NULL
+)
 }
 \arguments{
 \item{formula}{a \code{\link[=Surv]{survival object}} formula,

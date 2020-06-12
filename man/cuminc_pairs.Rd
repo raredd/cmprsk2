@@ -4,8 +4,14 @@
 \alias{cuminc_pairs}
 \title{Pairwise \code{cuminc} comparisons}
 \usage{
-cuminc_pairs(object, data = NULL, rho = 0, cencode = NULL,
-  method = p.adjust.methods, digits = 3L)
+cuminc_pairs(
+  object,
+  data = NULL,
+  rho = 0,
+  cencode = NULL,
+  method = p.adjust.methods,
+  digits = 3L
+)
 }
 \arguments{
 \item{object}{a \code{\link{cuminc2}} formula or object of class

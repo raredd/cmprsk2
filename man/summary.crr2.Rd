@@ -4,10 +4,20 @@
 \alias{summary.crr2}
 \title{\code{crr2} summary method}
 \usage{
-\method{summary}{crr2}(object, conf.int = 0.95, n = FALSE,
-  ref = FALSE, html = FALSE, combine_ci = html, digits = 2L,
-  format_p = html, color_p = html, format_n = n, htmlArgs = list(),
-  ...)
+\method{summary}{crr2}(
+  object,
+  conf.int = 0.95,
+  n = FALSE,
+  ref = FALSE,
+  html = FALSE,
+  combine_ci = html,
+  digits = 2L,
+  format_p = html,
+  color_p = html,
+  format_n = n,
+  htmlArgs = list(),
+  ...
+)
 }
 \arguments{
 \item{object}{an object of class \code{\link{crr2}}}

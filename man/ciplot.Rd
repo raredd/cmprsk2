@@ -5,33 +5,83 @@
 \alias{plot.cuminc2}
 \title{\code{cuminc2} plotting method}
 \usage{
-ciplot(x, col.ci = seq_along(xx), lty.ci = par("lty"),
-  lwd.ci = par("lwd"), events = TRUE, atrisk = TRUE,
-  events.total = TRUE, wh.events = c("events", "est", "est.sd",
-  "est.ci", "atrisk"), events.lab = NULL, events.digits = 3L,
-  events.lines = TRUE, events.col = FALSE, include_censored = FALSE,
-  main = NULL, xlab = "Time", ylab = "Probability",
-  groups.lab = names(xx), xlim = NULL, ylim = NULL,
-  cex.axis = par("cex.axis"), gy_test = TRUE, test_details = TRUE,
-  legend.args = list(), split = FALSE, xaxis.at = pretty(xlim),
-  yaxis.at = pretty(ylim), xaxis.lab = xaxis.at,
-  yaxis.lab = yaxis.at, events.at = xaxis.at,
-  groups.order = seq_along(xx), extra.margin = 5L, mar = NULL,
-  add = FALSE, panel.first = NULL, panel.last = NULL, ...)
+ciplot(
+  x,
+  col.ci = seq_along(xx),
+  lty.ci = par("lty"),
+  lwd.ci = par("lwd"),
+  events = TRUE,
+  atrisk = TRUE,
+  events.total = TRUE,
+  wh.events = c("events", "est", "est.sd", "est.ci", "atrisk"),
+  events.lab = NULL,
+  events.digits = 3L,
+  events.lines = TRUE,
+  events.col = FALSE,
+  include_censored = FALSE,
+  main = NULL,
+  xlab = "Time",
+  ylab = "Probability",
+  groups.lab = names(xx),
+  xlim = NULL,
+  ylim = NULL,
+  cex.axis = par("cex.axis"),
+  gy_test = TRUE,
+  test_details = TRUE,
+  legend.args = list(),
+  split = FALSE,
+  xaxis.at = pretty(xlim),
+  yaxis.at = pretty(ylim),
+  xaxis.lab = xaxis.at,
+  yaxis.lab = yaxis.at,
+  events.at = xaxis.at,
+  groups.order = seq_along(xx),
+  extra.margin = 5L,
+  mar = NULL,
+  add = FALSE,
+  panel.first = NULL,
+  panel.last = NULL,
+  ...
+)
 
-\method{plot}{cuminc2}(x, col.ci = seq_along(xx), lty.ci = par("lty"),
-  lwd.ci = par("lwd"), events = TRUE, atrisk = TRUE,
-  events.total = TRUE, wh.events = c("events", "est", "est.sd",
-  "est.ci", "atrisk"), events.lab = NULL, events.digits = 3L,
-  events.lines = TRUE, events.col = FALSE, include_censored = FALSE,
-  main = NULL, xlab = "Time", ylab = "Probability",
-  groups.lab = names(xx), xlim = NULL, ylim = NULL,
-  cex.axis = par("cex.axis"), gy_test = TRUE, test_details = TRUE,
-  legend.args = list(), split = FALSE, xaxis.at = pretty(xlim),
-  yaxis.at = pretty(ylim), xaxis.lab = xaxis.at,
-  yaxis.lab = yaxis.at, events.at = xaxis.at,
-  groups.order = seq_along(xx), extra.margin = 5L, mar = NULL,
-  add = FALSE, panel.first = NULL, panel.last = NULL, ...)
+\method{plot}{cuminc2}(
+  x,
+  col.ci = seq_along(xx),
+  lty.ci = par("lty"),
+  lwd.ci = par("lwd"),
+  events = TRUE,
+  atrisk = TRUE,
+  events.total = TRUE,
+  wh.events = c("events", "est", "est.sd", "est.ci", "atrisk"),
+  events.lab = NULL,
+  events.digits = 3L,
+  events.lines = TRUE,
+  events.col = FALSE,
+  include_censored = FALSE,
+  main = NULL,
+  xlab = "Time",
+  ylab = "Probability",
+  groups.lab = names(xx),
+  xlim = NULL,
+  ylim = NULL,
+  cex.axis = par("cex.axis"),
+  gy_test = TRUE,
+  test_details = TRUE,
+  legend.args = list(),
+  split = FALSE,
+  xaxis.at = pretty(xlim),
+  yaxis.at = pretty(ylim),
+  xaxis.lab = xaxis.at,
+  yaxis.lab = yaxis.at,
+  events.at = xaxis.at,
+  groups.order = seq_along(xx),
+  extra.margin = 5L,
+  mar = NULL,
+  add = FALSE,
+  panel.first = NULL,
+  panel.last = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{an object of class \code{\link{cuminc2}}}
@@ -133,7 +183,7 @@ plot(ci1)
 plot(ci1, split = 'event')
 plot(ci1, split = 'event', events = FALSE, test_details = FALSE,
      legend.args = list(x = 'topright', cex = 1.5, text.col = 2,
-                        title = "Gray\\'s test p-value for"))
+                        title = "Gray\'s test p-value for"))
 
 ## also plots "cuminc" objects but without extra features
 plot(ci1$cuminc)

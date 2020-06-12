@@ -4,8 +4,14 @@
 \alias{cuminc2}
 \title{Cumulative incidence analysis}
 \usage{
-cuminc2(formula, data, rho = 0, cencode = NULL, subset = NULL,
-  na.action = getOption("na.action"))
+cuminc2(
+  formula,
+  data,
+  rho = 0,
+  cencode = NULL,
+  subset = NULL,
+  na.action = getOption("na.action")
+)
 }
 \arguments{
 \item{formula}{a \code{\link[=Surv]{survival object}} formula,
