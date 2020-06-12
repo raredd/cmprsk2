@@ -519,6 +519,7 @@ ciplot_by <- function(rhs = '1', event, data, by = NULL, single = TRUE,
       )
     }, error = function(e) {
       e$message
+      stop(e)
     })
   })
   

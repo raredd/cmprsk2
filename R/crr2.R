@@ -419,8 +419,10 @@ summary.crr2 <- function(object, conf.int = 0.95, n = FALSE, ref = FALSE,
       )
       if (html && format_n) {
         o <- within(o, {
-          Total  <- sprintf('%s (%s)', Total, pp[[ii]][, 1L])
-          Events <- sprintf('%s (%s)', Events, pp[[ii]][, 2L])
+          Total <-
+            sprintf('%s (%s)', format(Total, big.mark = ','), pp[[ii]][, 1L])
+          Events <-
+            sprintf('%s (%s)', format(Events, big.mark = ','), pp[[ii]][, 2L])
         })
       }
     }
@@ -459,8 +461,10 @@ summary.crr2 <- function(object, conf.int = 0.95, n = FALSE, ref = FALSE,
       ii <- grep('^(Total|Events)', colnames(o))
       ni <- sapply(ns, function(x) sapply(x, colSums))
       ni <- c(ni[1L, 1L], ni[2L, ])
-      colnames(o)[ii] <- sprintf('%s<br /><font size=1>n = %s (%s)</font>',
-                                 colnames(o)[ii], ni, round(ni / ni[1L] * 100))
+      colnames(o)[ii] <-
+        sprintf('%s<br /><font size=1>n = %s (%s)</font>',
+                colnames(o)[ii], format(ni, big.mark = ','),
+                round(ni / ni[1L] * 100))
       colnames(o)[1L] <- gsub('\\(\\d+\\)', '(%)', colnames(o)[1L])
     }
     
