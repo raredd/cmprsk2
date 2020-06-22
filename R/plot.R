@@ -336,8 +336,8 @@ ciplot <- function(x,
       tmp <- d2[[ii]]
       w.adj <- strwidth('0', cex = cex.axis, font = par('font')) /
         2 * nd[seq.int(nrow(tmp))]
-      mtext(tmp$n.risk, side = 1L, at = tmp$time + w.adj, cex = cex.axis,
-            font = if (atrisk & ii == ng) 2L else 1L,
+      mtext(format(tmp$n.risk, big.mark = ','), 1L, at = tmp$time + w.adj,
+            cex = cex.axis, font = if (atrisk & ii == ng) 2L else 1L,
             las = 1L, line = line.pos[ii], adj = 1, col = col.events[ii])
     }
   }
