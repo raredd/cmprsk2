@@ -312,7 +312,7 @@ ciplot <- function(x,
     d1 <- data.frame(time = rep(as.numeric(colnames(ss)), each = nrow(ss)),
                      n.risk = c(ss), strata = rep(rownames(ss), ncol(ss)),
                      stringsAsFactors = FALSE)
-    d1$strata <- factor(d1$strata, rownames(ss))
+    d1$strata <- factor(d1$strata, setdiff(names(x$cuminc), 'Tests'))
     # d1 <- d1[d1$n.risk > 0, ]
     d2 <- split(d1, d1$strata)
     
@@ -334,6 +334,8 @@ ciplot <- function(x,
     
     for (ii in seq.int(ng)) {
       tmp <- d2[[ii]]
+      if (!nrow(tmp))
+        next
       w.adj <- strwidth('0', cex = cex.axis, font = par('font')) /
         2 * nd[seq.int(nrow(tmp))]
       mtext(format(tmp$n.risk, big.mark = ','), 1L, at = tmp$time + w.adj,
