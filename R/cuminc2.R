@@ -12,15 +12,15 @@
 #' equality across groups.
 #' 
 #' @param formula a \code{\link[=Surv]{survival object}} formula,
-#' \code{Surv(time, status(censor)) ~ response}, where \code{censor} is a
-#' unique value of the \code{status} variable indicating the censoring code;
-#' note all other unique values of \code{status} will be treated as competing
-#' risks
+#'   \code{Surv(time, status(censor)) ~ response}, where \code{censor} is a
+#'   unique value of the \code{status} variable indicating the censoring code;
+#'   note all other unique values of \code{status} will be treated as competing
+#'   risks
 #' @param data a data frame in which to interpret the variables named in
-#' \code{formula}
+#'   \code{formula}
 #' @param rho,cencode,subset,na.action passed to \code{\link[cmprsk]{cuminc}};
-#' the censoring indicator will be guessed from \code{formula} but may be
-#' overridden by \code{cencode}
+#'   the censoring indicator will be guessed from \code{formula} but may be
+#'   overridden by \code{cencode}
 #' 
 #' @seealso
 #' \code{\link{summary.cuminc2}}; \code{\link{plot.cuminc2}};
@@ -143,7 +143,7 @@ print.cuminc2 <- function(x, ...) {
 #'
 #' @param object an object of class \code{\link{cuminc2}}
 #' @param times a vector of times
-#' @param digits integer indicating the number of decimal places to be used
+#' @param digits number of digits past the decimal point to keep
 #' @param ... ignored
 #' 
 #' @seealso
@@ -154,17 +154,17 @@ print.cuminc2 <- function(x, ...) {
 #' A list with the following components:
 #' 
 #' \item{\code{est}}{a matrix of estimates of the subdistributions for the
-#' cumulative incidence model(s); see \code{\link[cmprsk]{timepoints}}}
+#'   cumulative incidence model(s); see \code{\link[cmprsk]{timepoints}}}
 #' \item{\code{var}}{a matrix giving the corresponding variances for the
-#' cumulative incidence model(s); see \code{\link[cmprsk]{timepoints}}}
+#'   cumulative incidence model(s); see \code{\link[cmprsk]{timepoints}}}
 #' \item{\code{events}}{a matrix with the number of cumulative events up
-#' to and including each value in \code{times}}
+#'   to and including each value in \code{times}}
 #' \item{\code{total_events}}{a vector giving the total number of events of
-#' each type (excluding censored observations)}
+#'   each type (excluding censored observations)}
 #' \item{\code{total_groups}}{a vector giving the number by group (including
-#' censored observations)}
+#'   censored observations)}
 #' \item{\code{total_atrisk}}{a vector giving the number remaining in the
-#' risk set regardless of event or censoring}
+#'   risk set regardless of event or censoring}
 #' 
 #' @examples
 #' ci <- cuminc2(Surv(futime, event(censored)) ~ sex, transplant)
@@ -352,13 +352,13 @@ split_cuminc <- function(x, wh = c('event', 'group'), ws_split = 'last') {
 #' \code{\link[cmprsk]{cuminc}}.
 #' 
 #' @param object a \code{\link{cuminc2}} formula or object of class
-#' \code{\link{cuminc2}}
+#'   \code{\link{cuminc2}}
 #' @param data a data frame to use (ignored if \code{formula}) is a
-#' \code{\link{cuminc2}} object
+#'   \code{\link{cuminc2}} object
 #' @param rho,cencode passed to \code{\link[cmprsk]{cuminc}}
 #' @param method p-value correction method (default is \code{'holm'};
-#' see \code{\link{p.adjust}}
-#' @param digits integer indicating the number of decimal places to be used
+#'   see \code{\link{p.adjust}}
+#' @param digits number of digits past the decimal point to keep
 #' 
 #' @examples
 #' ## these two are equivalent since there are only two levels
@@ -535,14 +535,14 @@ name_or_index <- function(x, y = NULL) {
 #' @param w,times arguments passed to \code{\link{timepoints}}
 #' @param digits number of digits past the decimal point to keep
 #' @param sd logical; if \code{FALSE}, the standard deviation will not be
-#' shown with the estimate
+#'   shown with the estimate
 #' @param ci logical; not implemented
 #' @param html logical; if \code{TRUE}, an html-friendly format is returned;
-#' the print method for \code{timepoints2} will use \code{\link{htmlTable}}
-#' if \code{html = TRUE}
+#'   the print method for \code{timepoints2} will use \code{\link{htmlTable}}
+#'   if \code{html = TRUE}
 #' @param htmlArgs for \code{html = TRUE}, a \emph{named} list of arguments
-#' passed to \code{\link[htmlTable]{htmlTable}} for additional formatting or
-#' to override defaults
+#'   passed to \code{\link[htmlTable]{htmlTable}} for additional formatting or
+#'   to override defaults
 #' @param ... ignored
 #' 
 #' @examples

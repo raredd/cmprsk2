@@ -11,36 +11,36 @@
 #' Regression modeling of subdistribution functions in competing risks.
 #'
 #' @param formula a \code{\link[=Surv]{survival object}} formula,
-#' \code{Surv(time, status(censor) == failure) ~ response}, where
-#' \code{censor} and \code{failure} are unique values of the \code{status}
-#' variable indicating the censoring and failure codes of interest; note all
-#' other unique values of \code{status} will be treated as competing risks
+#'   \code{Surv(time, status(censor) == failure) ~ response}, where
+#'   \code{censor} and \code{failure} are unique values of the \code{status}
+#'   variable indicating the censoring and failure codes of interest; note all
+#'   other unique values of \code{status} will be treated as competing risks
 #' @param data a data frame in which to interpret the variables named in
-#' \code{formula}
+#'   \code{formula}
 #' @param which optional character string giving the desired outcome of
-#' interest (i.e., one of the unique values of the \code{status} variable);
-#' if given, no other \code{crr} models are returned
+#'   interest (i.e., one of the unique values of the \code{status} variable);
+#'   if given, no other \code{crr} models are returned
 #' @param cox logical; if \code{TRUE}, a \code{\link{coxph}} model is fit
-#' using the event of interest with all other events treated as censored;
+#'   using the event of interest with all other events treated as censored;
 #' 
-#' alternatively, a formula to be passed to \code{\link{coxph}}, typically
-#' with the same RHS as \code{formula}, since this may be more desirable than
-#' setting \code{cox = TRUE}; note that this model may be fit to a different
-#' set of data depending on the missingness in variables of both models
+#'   alternatively, a formula to be passed to \code{\link{coxph}}, typically
+#'   with the same RHS as \code{formula}, since this may be more desirable than
+#'   setting \code{cox = TRUE}; note that this model may be fit to a different
+#'   set of data depending on the missingness in variables of both models
 #' @param variance logical; if \code{FALSE}, suppresses computation of the
-#' variance estimate and residuals
+#'   variance estimate and residuals
 #' @param cengroup,failcode,cencode additional arguments passed to
-#' \code{\link[cmprsk]{crr}}; these will be guessed from \code{formula} but
-#' may be overridden
+#'   \code{\link[cmprsk]{crr}}; these will be guessed from \code{formula} but
+#'   may be overridden
 #' @param gtol,maxiter,init (optional) additional arguments passed to
-#' \code{\link[cmprsk]{crr}}
+#'   \code{\link[cmprsk]{crr}}
 #' 
 #' @return
 #' A list of \code{\link{crr}} objects with some additional components:
 #' 
 #' \item{\code{coxph}}{a \code{\link{coxph}} model if \code{cox = TRUE}}
 #' \item{\code{nuftime}}{a vector with the number of times each unique
-#' failure time, \code{$uftime}, was seen}
+#'   failure time, \code{$uftime}, was seen}
 #' \item{\code{attr(, "model.frame")}}{the \code{\link{model.frame}}, i.e.,
 #' \code{cov1}, used in the call to \code{\link{crr}}}
 #' 
@@ -327,27 +327,27 @@ print.crr2 <- function(x, ...) {
 #'
 #' @param object an object of class \code{\link{crr2}}
 #' @param conf.int the level for a two-sided confidence interval on the
-#' coeficients; default is 0.95
+#'   coeficients; default is 0.95
 #' @param n logical; if \code{TRUE}, the sample size and number of events
-#' for each variable are added to the summary
+#'   for each variable are added to the summary
 #' @param ref logical; if \code{TRUE}, rows with reference categories are
-#' added to results
+#'   added to results
 #' @param html logical; if \code{TRUE}, an \code{\link{htmlTable}} will be
-#' returned; otherwise, a matrix
+#'   returned; otherwise, a matrix
 #' @param combine_ci logical; if \code{FALSE}, upper and lower confidence
-#' limits will be returned as separate columns; otherwise, an interval string
-#' will be returned
+#'   limits will be returned as separate columns; otherwise, an interval string
+#'   will be returned
 #' @param digits number of digits past the decimal point to keep
 #' @param format_p logical; if \code{TRUE}, p-values will be formatted;
-#' otherwise, p-values will only be rounded
+#'   otherwise, p-values will only be rounded
 #' @param color_p logical; if \code{TRUE}, p-values will be formatted and
-#' colored based on significance level; see \code{cmprsk2:::color_pval}
+#'   colored based on significance level; see \code{cmprsk2:::color_pval}
 #' @param format_n logical; if \code{TRUE}, for \code{html = TRUE} the total
-#' n is added for each total/events column and percents of total and events
-#' are shown in each row
+#'   n is added for each total/events column and percents of total and events
+#'   are shown in each row
 #' @param htmlArgs for \code{html = TRUE}, a \emph{named} list of arguments
-#' passed to \code{\link[htmlTable]{htmlTable}} for additional formatting or
-#' to override defaults
+#'   passed to \code{\link[htmlTable]{htmlTable}} for additional formatting or
+#'   to override defaults
 #' @param ... ignored
 #' 
 #' @seealso
@@ -495,12 +495,12 @@ summary.crr2 <- function(object, conf.int = 0.95, n = FALSE, ref = FALSE,
 #' Fit multiple \code{\link[survival]{finegray}} models.
 #' 
 #' @param formula a standard model formula, with survival on the left and
-#' covariates on the right
+#'   covariates on the right
 #' @param data a data frame containing the variables in \code{formula}
 #' @param cencode optional censor code; if missing, the censor code will be
-#' guessed from the status variable
+#'   guessed from the status variable
 #' @param ... additional arguments passed to \code{\link{finegray}} or
-#' \code{\link{coxph}}
+#'   \code{\link{coxph}}
 #' 
 #' @examples
 #' ## example from survival::finegray

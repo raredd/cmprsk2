@@ -99,9 +99,10 @@ control, use a specific x-coordinate}
 
 \item{wh.events}{a character string giving the type of \code{events} table
 to show; one of \code{"events"} (cumulative number of events), \code{"est"}
-(estimates, see \code{\link[cmprsk]{timepoints}}), \code{"est.sd"} (estimate
-+/- standard deviation), \code{"est.ci"} (estimate with confidence
-inverval), or \code{"atrisk"} (event at-risk table with censored)}
+(estimates, see \code{\link[cmprsk]{timepoints}}), \code{"est.sd"}
+(estimate +/- standard deviation), \code{"est.ci"} (estimate with
+confidence interval), or \code{"atrisk"} (event at-risk table with
+censored)}
 
 \item{events.lab}{heading for events table}
 

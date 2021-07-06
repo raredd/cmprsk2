@@ -33,12 +33,12 @@ interest (i.e., one of the unique values of the \code{status} variable);
 if given, no other \code{crr} models are returned}
 
 \item{cox}{logical; if \code{TRUE}, a \code{\link{coxph}} model is fit
-using the event of interest with all other events treated as censored;
+  using the event of interest with all other events treated as censored;
 
-alternatively, a formula to be passed to \code{\link{coxph}}, typically
-with the same RHS as \code{formula}, since this may be more desirable than
-setting \code{cox = TRUE}; note that this model may be fit to a different
-set of data depending on the missingness in variables of both models}
+  alternatively, a formula to be passed to \code{\link{coxph}}, typically
+  with the same RHS as \code{formula}, since this may be more desirable than
+  setting \code{cox = TRUE}; note that this model may be fit to a different
+  set of data depending on the missingness in variables of both models}
 
 \item{variance}{logical; if \code{FALSE}, suppresses computation of the
 variance estimate and residuals}
@@ -55,7 +55,7 @@ A list of \code{\link{crr}} objects with some additional components:
 
 \item{\code{coxph}}{a \code{\link{coxph}} model if \code{cox = TRUE}}
 \item{\code{nuftime}}{a vector with the number of times each unique
-failure time, \code{$uftime}, was seen}
+  failure time, \code{$uftime}, was seen}
 \item{\code{attr(, "model.frame")}}{the \code{\link{model.frame}}, i.e.,
 \code{cov1}, used in the call to \code{\link{crr}}}
 }

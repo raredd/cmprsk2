@@ -25,7 +25,7 @@ cuminc_pairs(
 \item{method}{p-value correction method (default is \code{'holm'};
 see \code{\link{p.adjust}}}
 
-\item{digits}{integer indicating the number of decimal places to be used}
+\item{digits}{number of digits past the decimal point to keep}
 }
 \description{
 Evaluate pairwise group differences in cumulative incidence with

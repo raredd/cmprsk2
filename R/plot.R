@@ -12,55 +12,56 @@
 #' @param col.ci,lty.ci,lwd.ci line color, type, and width for each curve
 #' @param events logical; if \code{TRUE}, a cumulative events table is drawn
 #' @param atrisk logical; if \code{TRUE}, the number at risk is added to the
-#' events table
+#'   events table
 #' @param events.total logical or numeric; if \code{TRUE}, cumulative events
-#' for each group is added to events table at a calculated position; for more
-#' control, use a specific x-coordinate
+#'   for each group is added to events table at a calculated position; for more
+#'   control, use a specific x-coordinate
 #' @param wh.events a character string giving the type of \code{events} table
-#' to show; one of \code{"events"} (cumulative number of events), \code{"est"}
-#' (estimates, see \code{\link[cmprsk]{timepoints}}), \code{"est.sd"} (estimate
-#' +/- standard deviation), \code{"est.ci"} (estimate with confidence
-#' inverval), or \code{"atrisk"} (event at-risk table with censored)
+#'   to show; one of \code{"events"} (cumulative number of events), \code{"est"}
+#'   (estimates, see \code{\link[cmprsk]{timepoints}}), \code{"est.sd"}
+#'   (estimate +/- standard deviation), \code{"est.ci"} (estimate with
+#'   confidence interval), or \code{"atrisk"} (event at-risk table with
+#'   censored)
 #' @param events.lab heading for events table
 #' @param events.digits when estimates are shown in events table (see
-#' \code{wh.events}), number of digits past the decimal to show
+#'   \code{wh.events}), number of digits past the decimal to show
 #' @param events.lines logical; draw lines next to groups in events table
 #' @param events.col logical or a vector with colors for events table text;
-#' if \code{TRUE}, \code{col.ci} will be used
+#'   if \code{TRUE}, \code{col.ci} will be used
 #' @param include_censored logical; if \code{TRUE}, censored patients are
-#' included in at-risk counts (may not be desired); the default (\code{FALSE})
-#' will only sum the at-risk table rows
+#'   included in at-risk counts (may not be desired); the default (\code{FALSE})
+#'   will only sum the at-risk table rows
 #' @param main title of plot
 #' @param xlab,ylab x- and y-axis labels
 #' @param groups.lab labels for each line in \code{events} table
 #' @param xlim,ylim x- and y-axis limits
 #' @param cex.axis text size for axes labels, \code{gy_test}, abd events table
 #' @param gy_test logical; if \code{TRUE} the tests of group equality will
-#' be shown
+#'   be shown
 #' @param test_details logical; if \code{TRUE} (default), all test details
-#' (test statistic, degrees of freedom, p-value) are shown; if \code{FALSE},
-#' only the p-value is shown
+#'   (test statistic, degrees of freedom, p-value) are shown; if \code{FALSE},
+#'   only the p-value is shown
 #' @param legend.args an optional \emph{named} list of \code{\link{legend}}
-#' arguments controlling the annotations when \code{gy_test = TRUE}
+#'   arguments controlling the annotations when \code{gy_test = TRUE}
 #' @param split optionally split plot by unique competing risks or group;
-#' one of \code{FALSE} (default, no splitting), \code{"group"}, or
-#' \code{"event"}
+#'   one of \code{FALSE} (default, no splitting), \code{"group"}, or
+#'   \code{"event"}
 #' @param xaxis.at,yaxis.at positions for x- and y-axis labels and ticks
 #' @param xaxis.lab,yaxis.lab x- and y-axis tick labels
 #' @param events.at x-coordinates to show events table (default is
-#' \code{xaxis.at})
+#'   \code{xaxis.at})
 #' @param groups.order order of groups in events table
 #' @param extra.margin increase left margin when groups labels in events
-#' table are long (note that this will be overridden by \code{mar})
+#'   table are long (note that this will be overridden by \code{mar})
 #' @param mar margins; see \code{mar} section in \code{\link{par}}
 #' @param add logical; if \code{TRUE}, \code{par}s are not reset; allows for
-#' multiple panels, e.g., when using \code{par(mfrow = c(1, 2))}
+#'   multiple panels, e.g., when using \code{par(mfrow = c(1, 2))}
 #' @param panel.first an expression to be evaluated after the plot axes are
-#' set up but before any plotting takes place
+#'   set up but before any plotting takes place
 #' @param panel.last an expression to be evaluated after plotting but before
-#' returning from the function
+#'   returning from the function
 #' @param ... additional parameters (\code{font}, \code{mfrow}, \code{bty},
-#' \code{tcl}, \code{cex.lab}, \code{xaxs}, etc) passed to \code{\link{par}}
+#'   \code{tcl}, \code{cex.lab}, \code{xaxs}, etc) passed to \code{\link{par}}
 #' 
 #' @seealso
 #' \code{\link{ciplot_by}}; \code{\link{cuminc2}};
@@ -382,32 +383,32 @@ plot.cuminc2 <- ciplot
 #' @param single logical; if TRUE, each level of by will be drawn in a separate window
 #' @param cencode unique value of \code{event} denoting censoring
 #' @param gy_test one of \code{FALSE} (no test performed), a numeric value
-#' (passed to \code{\link[cmprsk]{cuminc}} as the \code{rho} value), or
-#' \code{TRUE} (default, \code{rho = 0})
+#'   (passed to \code{\link[cmprsk]{cuminc}} as the \code{rho} value), or
+#'   \code{TRUE} (default, \code{rho = 0})
 #' @param main title(s) of plot(s)
 #' @param ylab y-axis label
 #' @param sub sub-title displayed in upper left corner; should be a character
-#' vector with length equal to the number of panels (i.e., the number of
-#' unique values of \code{by} or length one if \code{by} was not given)
+#'   vector with length equal to the number of panels (i.e., the number of
+#'   unique values of \code{by} or length one if \code{by} was not given)
 #' @param groups_lab events table group labels; should be a character vector
-#' with length equal to the number of groups
+#'   with length equal to the number of groups
 #' @param fig_lab figure panel labels; should be a character vector with
-#' length equal to the number of panels (i.e., the number of unique values of
-#' \code{by} or length one if \code{by} was not given)
+#'   length equal to the number of panels (i.e., the number of unique values of
+#'   \code{by} or length one if \code{by} was not given)
 #' @param col.ci color for individual curves or for all curves in a plot if
-#' \code{by} is given and \code{map.col = TRUE}; if \code{col.ci} is a named
-#' vector which matches the group labels, then colors are mapped to the
-#' corresponding groups; see \code{\link{ciplot}}
+#'   \code{by} is given and \code{map.col = TRUE}; if \code{col.ci} is a named
+#'   vector which matches the group labels, then colors are mapped to the
+#'   corresponding groups; see \code{\link{ciplot}}
 #' @param map.col logical; if \code{TRUE}, \code{col.ci} will be the color
-#' of all curves in each plot (only used when \code{by} is non-missing)
+#'   of all curves in each plot (only used when \code{by} is non-missing)
 #' @param time character string of the time variable (optional)
 #' @param add logical; if \code{FALSE} (default), resets graphical parameters
-#' to settings before \code{ciplot_by} was called; set to \code{TRUE} for
-#' adding to existing plots
+#'   to settings before \code{ciplot_by} was called; set to \code{TRUE} for
+#'   adding to existing plots
 #' @param plot logical; if \code{FALSE}, no plot is created but a list with
-#' \code{\link{cuminc2}} object(s) is returned
+#'   \code{\link{cuminc2}} object(s) is returned
 #' @param ... additional arguments passed to \code{\link{ciplot}} or graphical
-#' parameters subsequently passed to \code{\link{par}}
+#'   parameters subsequently passed to \code{\link{par}}
 #' 
 #' @return
 #' Invisibly returns a list of \code{\link{cuminc2}} object(s) used to

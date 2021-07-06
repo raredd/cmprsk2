@@ -27,10 +27,10 @@
 #' 
 #' @param object an object of class \code{\link[cmprsk]{crr}}
 #' @param ic information criterion, one of \code{"AIC"}, \code{"BIC"},
-#' \code{"AICc"}, or \code{"BICc"}; see details
+#'   \code{"AICc"}, or \code{"BICc"}; see details
 #' @param p an optional penalty term to be multiplied by, \code{k}, the
-#' number of free parameters estimated in each model including the intercept
-#' term
+#'   number of free parameters estimated in each model including the intercept
+#'   term
 #' @param fit,scale,k see \code{\link{extractAIC}}
 #' @param ... additional arguments passed to or from other methods
 #' 
@@ -192,8 +192,8 @@ terms.crr <- terms.crr2
 #' 
 #' @param ... one or more objects of class \code{\link[cmprsk]{crr}}
 #' @param p an optional penalty term to be multiplied by, \code{k}, the
-#' number of free parameters estimated in each model including the intercept
-#' term
+#'   number of free parameters estimated in each model including the intercept
+#'   term
 #' 
 #' @seealso
 #' \code{\link{crrfit}}; \code{\link{crrwald.test}}
@@ -326,13 +326,13 @@ crrFits <- function(..., p) {
 #' 
 #' @param object an object of class \code{\link[cmprsk]{crr}}
 #' @param terms a list (optionally named) giving the indices of the
-#' coefficients to test; a list of length \code{n} will perform \code{n}
-#' tests; default is an overall test and each coefficient individually
+#'   coefficients to test; a list of length \code{n} will perform \code{n}
+#'   tests; default is an overall test and each coefficient individually
 #' 
-#' Alternatively, a (named) vector (or list) of character strings can be
-#' used which will \code{\link{grep}} for each pattern in the coefficient
-#' names; patterns that match multiple terms will be tested as a group, and
-#' only one character string per test will be used
+#'   Alternatively, a (named) vector (or list) of character strings can be
+#'   used which will \code{\link{grep}} for each pattern in the coefficient
+#'   names; patterns that match multiple terms will be tested as a group, and
+#'   only one character string per test will be used
 #' 
 #' @seealso
 #' \code{\link[aod]{wald.test}}; \code{\link{crrfit}}; \code{\link{crrFits}}

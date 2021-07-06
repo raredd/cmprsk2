@@ -11,7 +11,7 @@
 
 \item{times}{a vector of times}
 
-\item{digits}{integer indicating the number of decimal places to be used}
+\item{digits}{number of digits past the decimal point to keep}
 
 \item{...}{ignored}
 }
@@ -19,17 +19,17 @@
 A list with the following components:
 
 \item{\code{est}}{a matrix of estimates of the subdistributions for the
-cumulative incidence model(s); see \code{\link[cmprsk]{timepoints}}}
+  cumulative incidence model(s); see \code{\link[cmprsk]{timepoints}}}
 \item{\code{var}}{a matrix giving the corresponding variances for the
-cumulative incidence model(s); see \code{\link[cmprsk]{timepoints}}}
+  cumulative incidence model(s); see \code{\link[cmprsk]{timepoints}}}
 \item{\code{events}}{a matrix with the number of cumulative events up
-to and including each value in \code{times}}
+  to and including each value in \code{times}}
 \item{\code{total_events}}{a vector giving the total number of events of
-each type (excluding censored observations)}
+  each type (excluding censored observations)}
 \item{\code{total_groups}}{a vector giving the number by group (including
-censored observations)}
+  censored observations)}
 \item{\code{total_atrisk}}{a vector giving the number remaining in the
-risk set regardless of event or censoring}
+  risk set regardless of event or censoring}
 }
 \description{
 \code{cuminc2} summary method

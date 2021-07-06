@@ -10,13 +10,13 @@ crrwald.test(object, terms)
 \item{object}{an object of class \code{\link[cmprsk]{crr}}}
 
 \item{terms}{a list (optionally named) giving the indices of the
-coefficients to test; a list of length \code{n} will perform \code{n}
-tests; default is an overall test and each coefficient individually
+  coefficients to test; a list of length \code{n} will perform \code{n}
+  tests; default is an overall test and each coefficient individually
 
-Alternatively, a (named) vector (or list) of character strings can be
-used which will \code{\link{grep}} for each pattern in the coefficient
-names; patterns that match multiple terms will be tested as a group, and
-only one character string per test will be used}
+  Alternatively, a (named) vector (or list) of character strings can be
+  used which will \code{\link{grep}} for each pattern in the coefficient
+  names; patterns that match multiple terms will be tested as a group, and
+  only one character string per test will be used}
 }
 \description{
 Wald test for \code{crr} model coefficients
