@@ -108,7 +108,7 @@ ciplot <- function(x,
                    groups.lab = names(xx),
                    
                    xlim = NULL, ylim = NULL,
-                   cex.axis = par('cex.axis'),
+                   cex.axis = par('cex.axis'), cex.events = cex.axis,
                    gy_test = TRUE, test_details = TRUE, legend.args = list(),
                    split = FALSE,
                    xaxis.at = pretty(xlim),
@@ -261,7 +261,7 @@ ciplot <- function(x,
       else events.lab
       
       mtext(events.lab, side = 1L, at = usr[1L], line = 1.5,
-            adj = 1, col = 1L, las = 1L, cex = cex.axis, font = 2L)
+            adj = 1, col = 1L, las = 1L, cex = cex.events)
     }
     
     ## labels for each row in at-risk table
@@ -270,7 +270,7 @@ ciplot <- function(x,
     line.pos <- seq.int(ng)[order(groups.order)] + 2L
     
     mtext(groups.lab, side = 1L, line = line.pos, adj = 1, las = 1L,
-          col = col.events, at = group.name.pos, cex = cex.axis, font = 2L)
+          col = col.events, at = group.name.pos, cex = cex.events)
     
     ## labels for total events
     if (events.total) {
@@ -283,9 +283,9 @@ ciplot <- function(x,
       if (atrisk)
         n.events <- c(n.events, NA)
       mtext(c(n.events), side = 1L, at = at, line = line.pos, adj = 1,
-            col = col.events, las = 1L, cex = cex.axis, font = 2L)
+            col = col.events, las = 1L, cex = cex.events)
       mtext(total.lab, side = 1L, at = at, line = 1.5, adj = 1,
-            col = 1L, las = 1L, cex = cex.axis, font = 2L)
+            col = 1L, las = 1L, cex = cex.events)
     }
     
     ## draw matching lines for n events
@@ -337,10 +337,10 @@ ciplot <- function(x,
       tmp <- d2[[ii]]
       if (!nrow(tmp))
         next
-      w.adj <- strwidth('0', cex = cex.axis, font = par('font')) /
+      w.adj <- strwidth('0', cex = cex.events, font = par('font')) /
         2 * nd[seq.int(nrow(tmp))]
       mtext(format(tmp$n.risk, big.mark = ','), 1L, at = tmp$time + w.adj,
-            cex = cex.axis, font = if (atrisk & ii == ng) 2L else 1L,
+            cex = cex.events, font = if (atrisk & ii == ng) 1L else 1L,
             las = 1L, line = line.pos[ii], adj = 1, col = col.events[ii])
     }
   }
@@ -354,7 +354,7 @@ ciplot <- function(x,
     else {
       largs <- list(
         x = 'topleft', legend = paste0(names(txt), ': ', txt),
-        bty = 'n', cex = cex.axis
+        bty = 'n', cex = cex.events
       )
       if (!islist(legend.args))
         legend.args <- list()
