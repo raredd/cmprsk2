@@ -1,7 +1,7 @@
 ### utils
 # %||%, %inside%, %ni%, assert_class, catlist, islist, is.loaded, nth,
-# parse_formula, pvalr, color_pval, rescaler, roundr, strata, terms.inner,
-# sterms.inner, trimwsq
+# parse_formula, pvalr, color_pval, rescaler, roundr, signif2, strata,
+# terms.inner, sterms.inner, trimwsq
 # 
 # formula s3 methods:
 # is.crr2, is.crr2.default, is.crr2.formula, is.cuminc2, is.cuminc2.default,
@@ -199,28 +199,25 @@ pvalr <- function(pv, sig.limit = 0.001, digits = 2L, scientific = FALSE,
   })
 }
 
-color_pval <- function(pvals, breaks = c(0, .01, .05, .1, .5, 1),
+color_pval <- function(pv, breaks = c(0, 0.01, 0.05, 0.1, 0.5, 1),
                        cols = colorRampPalette(2:1)(length(breaks)),
-                       sig.limit = 0.001, digits = 3L, show.p = FALSE,
-                       format_pval = TRUE) {
-  ## rawr::color_pval -- format and color p-values for html tables
-  if (!is.numeric(pvals))
-    return(pvals)
-  pvn <- pvals
+                       sig.limit = 0.001, digits = 2L, show.p = FALSE,
+                       format_pval = TRUE, na = '-', ...) {
+  if (!is.numeric(pv))
+    return(pv)
+  pvn <- pv
   
-  stopifnot(
-    length(breaks) == length(cols)
-  )
+  stopifnot(length(breaks) == length(cols))
   
-  pvals <- if (isTRUE(format_pval))
-    pvalr(pvn, sig.limit, digits, TRUE, show.p)
+  pv <- if (isTRUE(format_pval))
+    pvalr(pvn, sig.limit, digits, scientific = FALSE, html = TRUE, show.p)
   else if (identical(format_pval, FALSE))
-    pvals
-  else format_pval(pvals)
+    pv else format_pval(pv)
   
   pvc <- cols[findInterval(pvn, breaks)]
+  res <- sprintf('<font color=\"%s\">%s</font>', pvc, pv)
   
-  sprintf('<font color=\"%s\">%s</font>', pvc, pvals)
+  replace(res, grepl('>NA<', res, fixed = TRUE), na)
 }
 
 nth <- function(x, p, n = NULL, keep_split = FALSE, repl = '$$$', ...) {
@@ -257,6 +254,13 @@ rescaler <- function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
 roundr <- function(x, digits = 1L) {
   ## round without dropping trailing 0s (returns character strings)
   sprintf('%.*f', digits, x)
+}
+
+signif2 <- function(x, digits = 6L) {
+  sapply(x, function(xx) {
+    s <- signif(xx, digits = digits)
+    formatC(s, digits = digits, format = 'fg', flag = '#')
+  })
 }
 
 strata <- function(formula) {
