@@ -35,7 +35,8 @@
 #' @param xlab,ylab x- and y-axis labels
 #' @param groups.lab labels for each line in \code{events} table
 #' @param xlim,ylim x- and y-axis limits
-#' @param cex.axis text size for axes labels, \code{gy_test}, abd events table
+#' @param cex.axis text size for axis labels and \code{gy_test}events table
+#' @param cex.events text size for events table
 #' @param gy_test logical; if \code{TRUE} the tests of group equality will
 #'   be shown
 #' @param test_details logical; if \code{TRUE} (default), all test details

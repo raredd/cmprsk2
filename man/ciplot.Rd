@@ -128,7 +128,9 @@ will only sum the at-risk table rows}
 
 \item{xlim, ylim}{x- and y-axis limits}
 
-\item{cex.axis}{text size for axes labels, \code{gy_test}, abd events table}
+\item{cex.axis}{text size for axis labels and \code{gy_test}events table}
+
+\item{cex.events}{text size for events table}
 
 \item{gy_test}{logical; if \code{TRUE} the tests of group equality will
 be shown}
