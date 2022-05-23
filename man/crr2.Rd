@@ -13,6 +13,8 @@ crr2(
   cengroup = NULL,
   failcode = NULL,
   cencode = NULL,
+  cov2 = NULL,
+  tf = NULL,
   gtol = 1e-06,
   maxiter = 10,
   init = NULL
@@ -43,9 +45,12 @@ if given, no other \code{crr} models are returned}
 \item{variance}{logical; if \code{FALSE}, suppresses computation of the
 variance estimate and residuals}
 
-\item{cengroup, failcode, cencode}{additional arguments passed to
+\item{cengroup, failcode, cencode, cov2}{additional arguments passed to
 \code{\link[cmprsk]{crr}}; these will be guessed from \code{formula} but
 may be overridden}
+
+\item{tf}{a function which takes a vector of times and returns a matrix to
+be multiplied by \code{cov2}; see \code{[cmprsk]\link{crr}}}
 
 \item{gtol, maxiter, init}{(optional) additional arguments passed to
 \code{\link[cmprsk]{crr}}}
@@ -56,8 +61,11 @@ A list of \code{\link{crr}} objects with some additional components:
 \item{\code{coxph}}{a \code{\link{coxph}} model if \code{cox = TRUE}}
 \item{\code{nuftime}}{a vector with the number of times each unique
   failure time, \code{$uftime}, was seen}
-\item{\code{attr(, "model.frame")}}{the \code{\link{model.frame}}, i.e.,
-\code{cov1}, used in the call to \code{\link{crr}}}
+\item{\code{n.missing}}{the number of observations removed due to missingness}
+\item{\code{attr(, "model.matrix")}}{the \code{\link{model.matrix}}, i.e.,
+  \code{cov1}, used in the call to \code{\link{crr}}}
+\item{\code{attr(, "model.frame")}}{the \code{\link{model.frame}} for
+  \code{cov1}}
 }
 \description{
 Regression modeling of subdistribution functions in competing risks.
@@ -99,7 +107,19 @@ summary(crrs, html = TRUE, n = TRUE)
 cl <- crr2(Surv(futime, event(censored) == death) ~ age + sex + abo,
            na.omit(transplant))
 cl[[1]]
+
+cl[[1]]$call$cov2 <- NULL
 eval(cl[[1]]$call)
+
+
+## covariates that are functions of time are identified by tf()
+crr2(Surv(futime, event(censored) == death) ~ factor(sex) + age + tf(age),
+     data = transplant, tf = function(uft) cbind(uft, uft ^ 2))
+
+## same as above but using the cov2 option
+crr2(Surv(futime, event(censored) == death) ~ factor(sex) + age,
+     cov2 = na.omit(cbind(transplant$age, transplant$age)),
+     data = transplant, tf = function(uft) cbind(uft, uft ^ 2))
 
 
 ## example from cmprsk::crr

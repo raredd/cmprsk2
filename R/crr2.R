@@ -29,9 +29,11 @@
 #'   set of data depending on the missingness in variables of both models
 #' @param variance logical; if \code{FALSE}, suppresses computation of the
 #'   variance estimate and residuals
-#' @param cengroup,failcode,cencode additional arguments passed to
+#' @param cengroup,failcode,cencode,cov2 additional arguments passed to
 #'   \code{\link[cmprsk]{crr}}; these will be guessed from \code{formula} but
 #'   may be overridden
+#' @param tf a function which takes a vector of times and returns a matrix to
+#'   be multiplied by \code{cov2}; see \code{[cmprsk]\link{crr}}
 #' @param gtol,maxiter,init (optional) additional arguments passed to
 #'   \code{\link[cmprsk]{crr}}
 #' 
@@ -41,8 +43,11 @@
 #' \item{\code{coxph}}{a \code{\link{coxph}} model if \code{cox = TRUE}}
 #' \item{\code{nuftime}}{a vector with the number of times each unique
 #'   failure time, \code{$uftime}, was seen}
-#' \item{\code{attr(, "model.frame")}}{the \code{\link{model.frame}}, i.e.,
-#' \code{cov1}, used in the call to \code{\link{crr}}}
+#' \item{\code{n.missing}}{the number of observations removed due to missingness}
+#' \item{\code{attr(, "model.matrix")}}{the \code{\link{model.matrix}}, i.e.,
+#'   \code{cov1}, used in the call to \code{\link{crr}}}
+#' \item{\code{attr(, "model.frame")}}{the \code{\link{model.frame}} for
+#'   \code{cov1}}
 #' 
 #' @seealso
 #' \code{\link[cmprsk]{crr}}; \code{\link{summary.crr2}};
@@ -86,7 +91,19 @@
 #' cl <- crr2(Surv(futime, event(censored) == death) ~ age + sex + abo,
 #'            na.omit(transplant))
 #' cl[[1]]
+#' 
+#' cl[[1]]$call$cov2 <- NULL
 #' eval(cl[[1]]$call)
+#' 
+#' 
+#' ## covariates that are functions of time are identified by tf()
+#' crr2(Surv(futime, event(censored) == death) ~ factor(sex) + age + tf(age),
+#'      data = transplant, tf = function(uft) cbind(uft, uft ^ 2))
+#' 
+#' ## same as above but using the cov2 option
+#' crr2(Surv(futime, event(censored) == death) ~ factor(sex) + age,
+#'      cov2 = na.omit(cbind(transplant$age, transplant$age)),
+#'      data = transplant, tf = function(uft) cbind(uft, uft ^ 2))
 #'
 #'
 #' ## example from cmprsk::crr
@@ -115,63 +132,32 @@
 #' @export
 
 crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
-                 cengroup = NULL, failcode = NULL, cencode = NULL,
-                 gtol = 1e-06, maxiter = 10, init = NULL) {
-  if (!is.crr2(formula))
+                 cengroup = NULL, failcode = NULL, cencode = NULL, cov2 = NULL,
+                 tf = NULL, gtol = 1e-6, maxiter = 10, init = NULL) {
+  if (!is.crr2(formula)) {
     stop(
       'Invalid formula - use the following structure or see ?crr2:\n',
       '\tSurv(time, status(censor) == failure) ~ response',
       call. = FALSE
     )
+  }
   
-  form <- parse_formula(formula)
   name <- substitute(data)
   Name <- if (length(name) > 1L)
     as.list(name)[[2L]] else name
+  form <- parse_formula(formula, data)
   
-  lhs <- form$lhs
-  rhs <- form$rhs
+  lhs <- form$lhs_vars
+  rhs <- form$rhs_vars
   
-  # data.frame class uses "drop = TRUE" by default in single-bracket subsetting
-  # but tbl_df class uses "drop = FALSE" by default. 
-  # Added "drop = TRUE" argument throughout code since many of these single-bracket 
-  # subsets are expecting a vector; will make code compatible with tbl_df. 
   status   <- levels(as.factor(data[, form$fstatus, drop = TRUE]))
-  # cencode  <- cencode  %||% form[[2L]][1L]
-  # failcode <- failcode %||% form[[2L]][2L]
   cencode  <- cencode  %||% form$cencode
   failcode <- failcode %||% form$failcode
-  
-  if (length(wh <- setdiff(c(lhs, rhs), names(data))))
-    stop(
-      sprintf('Variable%s %s not found in %s',
-              ifelse(length(wh) > 1L, 's', ''),
-              toString(shQuote(wh)), shQuote(name)),
-      call. = FALSE
-    )
-  if (any(wh <- c(cencode, failcode) %ni% data[, form$fstatus, drop = TRUE]))
-    warning(
-      sprintf('%s not found in %s[, %s]',
-              toString(shQuote(c(cencode, failcode)[wh])),
-              deparse(name), shQuote(form$fstatus)),
-      call. = FALSE
-    )
-  if (length(wh <- unique(data[, form$fstatus, drop = TRUE])) <= 2L)
-    warning(
-      gsub('\\n\\s{2,}', ' ',
-           sprintf('Only %s found in in %s[, %s]\n Typically, censoring,
-                   event of interest, and >=1 competing event are used',
-                   toString(shQuote(wh)), deparse(name), shQuote(form$fstatus))
-      ),
-      call. = FALSE
-    )
   
   ## all events of interest minus censored
   crisks <- if (!is.null(which))
     which else c(failcode, setdiff(status, c(cencode, failcode)))
-  stopifnot(
-    length(crisks) >= 1L
-  )
+  stopifnot(length(crisks) >= 1L)
   
   cengroup <- cengroup %||% rep_len(1L, nrow(data))
   
@@ -184,15 +170,23 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
     assign(as.character(Name), data)
   }
   
-  formula <- sprintf('Surv(%s, %s == %s) ~ %s',
-                     lhs[1L], lhs[2L], shQuote(failcode),
-                     paste(deparse(formula[[3L]]), collapse = ''))
-  formula <- as.formula(formula)
-  
   ## add model.frame for use in other methods
-  mf <- model.frame(formula, data)[, -1L, drop = FALSE]
-  mm <- model.matrix(formula, data)[, -1L, drop = FALSE]
-  init <- rep_len(if (is.null(init)) 0L else init, ncol(mm))
+  mf <- model.frame(reformulate(form$cov1), data)
+  mm <- model.matrix(reformulate(form$cov1), data)[, -1L, drop = FALSE]
+  
+  if (is.null(form$cov2) & is.null(cov2)) {
+    cm <- NULL
+  } else {
+    stopifnot(!is.null(tf))
+    nc <- ncol(tf(1))
+    cm <- if (is.null(cov2)) {
+      tform <- reformulate(form$cov2)
+      cm <- model.matrix(tform, data)[, -1L, drop = FALSE]
+      cm[, rep_len(seq.int(ncol(cm)), nc)]
+    } else cov2
+  }
+  
+  init <- rep_len(if (is.null(init)) 0L else init, ncol(cbind(mm, cm)))
   
   crrs <- lapply(crisks, function(x) {
     ftime   <- form$ftime
@@ -200,23 +194,25 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
     
     ## substitute to get a more helpful call -- can run crr directly
     call <- substitute(
-      crr(data[, ftime, drop = TRUE], data[, fstatus, drop = TRUE],
+      crr(data[, ftime, drop = TRUE], data[, fstatus, drop = TRUE], tf = tf,
           cov1 = model.matrix(formula, data)[, -1L, drop = FALSE],
-          cencode = cencode, failcode = x, variance = variance,
+          cov2 = cov2, cencode = cencode, failcode = x, variance = variance,
           cengroup = cengroup, gtol = gtol, maxiter = maxiter, init = init),
-      list(data = name, ftime = ftime, fstatus = fstatus,
-           formula = call('~', formula[[3L]]), cencode = cencode,
+      list(data = name, ftime = ftime, fstatus = fstatus, cencode = cencode,
+           formula = reformulate(form$cov1),
+           # cov2 = if (is.null(cm))
+           #   NULL else model.matrix(tform, data)[, -1L, drop = FALSE],
            x = x, variance = variance, cengroup = cengroup,
            gtol = gtol, maxiter = maxiter, init = init)
     )
-    call$cengroup <- if (length(un <- unique(cengroup)) == 1L)
-      substitute(rep(un, nrow(data)), list(un = un, data = name))
-    else call$cengroup
+    
+    if (length(un <- unique(cengroup)) == 1L)
+      call$cengroup <- substitute(rep(un, nrow(data)), list(un = un, data = name))
     
     fit <- substitute(
-      crr(data[, ftime, drop = TRUE], data[, fstatus, drop = TRUE], cov1 = mm,
-          cencode = cencode, failcode = x, variance = variance,
-          cengroup = cengroup, gtol = gtol, maxiter = maxiter, init = init),
+      crr(data[, ftime, drop = TRUE], data[, fstatus, drop = TRUE], init = init,
+          cov1 = mm, cov2 = cm, cencode = cencode, failcode = x, tf = tf,
+          variance = variance, cengroup = cengroup, gtol = gtol, maxiter = maxiter),
       list(ftime = ftime, fstatus = fstatus, cencode = cencode,
            x = x, variance = variance, cengroup = cengroup,
            gtol = gtol, maxiter = maxiter, init = init)
@@ -245,7 +241,9 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
     
     ## add model.frame, model.matrix for use in other methods
     fit <- structure(
-      fit, model.frame = mf, model.matrix = mm, failcode = fc, ns = ns,
+      fit,
+      model.frame = mf, model.matrix = mm,
+      failcode = fc, ns = ns, cov1 = mm, cov2 = cm,
       has_reference = sapply(ns, function(x)
         any(grepl('^Reference', rownames(x))))
     )
@@ -268,7 +266,7 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   formula <- if (isTRUE(cox)) {
     sprintf('Surv(%s, %s %%in%% c(%s)) ~ %s',
             form$ftime, form$fstatus, toString(shQuote(crisks)),
-            paste(deparse(formula[[3L]]), collapse = ''))
+            paste(form$cov1, collapse = ' + '))
   } else cox
   formula <- as.formula(formula)
   
@@ -385,7 +383,7 @@ summary.crr2 <- function(object, conf.int = 0.95, n = FALSE, ref = FALSE,
   oo <- object
   
   if (html && !is.loaded('htmlTable')) {
-    message('The \'htmlTable\' package is not loaded', domain = NA)
+    message('the \'htmlTable\' package is not loaded', domain = NA)
     html <- FALSE
   }
   
