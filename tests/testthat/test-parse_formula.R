@@ -15,7 +15,10 @@ test_that('crr2/cuminc2 formulas are properly parsed', {
   f3 <- Surv(futime, event(censored)) ~ sex
   f4 <- Surv(futime, event(censor) == deaths) ~ sex + abo
   f5 <- Surv(futime, event(censored) == death) ~ sex + strata(abo)
-  f6 <- Surv(futime_bad, event(censored)) ~ sex
+  f6 <- Surv(futime, event(censored)) ~ strata(abo)
+  f7 <- Surv(futime, event(censored)) ~ strata(factor(strata(abo)))
+  
+  b1 <- Surv(futime_bad, event(censored)) ~ sex
   
   
   ## check for cencode in formula
@@ -60,13 +63,28 @@ test_that('crr2/cuminc2 formulas are properly parsed', {
   )
   
   expect_identical(
-    parse_formula(f5)$rhs,
+    parse_formula(f5)$cov1,
     'sex'
   )
   
   expect_identical(
     parse_formula(f5)$strata,
     'abo'
+  )
+  
+  expect_identical(
+    parse_formula(f6)$strata,
+    'abo'
+  )
+  
+  expect_identical(
+    parse_formula(f7)$strata,
+    'abo'
+  )
+  
+  expect_identical(
+    parse_formula(f6)$cov1,
+    NULL
   )
   
   
@@ -82,7 +100,7 @@ test_that('crr2/cuminc2 formulas are properly parsed', {
   )
   
   expect_error(
-    parse_formula(f6, tp),
+    parse_formula(b1, tp),
     regexp = 'numeric values >= 0'
   )
   
