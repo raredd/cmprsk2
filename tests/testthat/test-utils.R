@@ -17,11 +17,6 @@ test_that('binary operators', {
     islist(list())
   )
   
-  x <- sample(10)
-  expect_identical(
-    x %in% 5, !x %ni% 5
-  )
-  
 })
 
 test_that('package utils', {

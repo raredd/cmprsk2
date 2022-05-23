@@ -76,14 +76,13 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
   na.action <- match.fun(na.action)
   
   form  <- parse_formula(formula, data, as.character(name))
-  fname <- as.formula(deparse(formula))
   call  <- match.call()
-  call$formula <- fname
+  call$formula <- as.formula(deparse1(formula))
   
   subset <- subset %||% rep_len(TRUE, nrow(data))
   data   <- droplevels(data[subset, ])
   
-  idx <- !complete.cases(data[, c(form$lhs, form$rhs)])
+  idx <- !complete.cases(data[, c(form$lhs_vars, form$rhs_vars)])
   if (any(!!(n <- as.integer(sum(idx))))) {
     message(n, ' observations removed due to missingness', domain = NA)
     data   <- data[!idx, ]
@@ -92,17 +91,22 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
   }
   nr <- nrow(data)
   
-  group  <- if (!length(form$rhs))
-    rep_len(1L, nr) else interaction(data[, form$rhs, drop = FALSE])
+  group  <- if (is.null(form$cov1))
+    rep_len(1L, nr) else
+      interaction(data[, setdiff(form$rhs_vars, form$strata), drop = FALSE])
   strata <- if (is.null(form$strata))
-    rep_len(1L, nr) else interaction(data[, form$strata, drop = TRUE])
+    rep_len(1L, nr) else
+      interaction(data[, form$strata, drop = TRUE])
   
   group  <- droplevels(as.factor(group))
   strata <- droplevels(as.factor(strata))
   
-  ci <- cuminc(
-    data[, form$ftime, drop = TRUE], data[, form$fstatus, drop = TRUE],
-    group, strata, rho, cencode %||% form$cencode, rep_len(TRUE, nr), na.action
+  ci <- cmprsk::cuminc(
+    ftime = data[, form$ftime, drop = TRUE],
+    fstatus = data[, form$fstatus, drop = TRUE],
+    group = group, strata = strata, rho = rho,
+    cencode = cencode %||% form$cencode,
+    subset = rep_len(TRUE, nr), na.action = na.action
   )
   
   ci <- list(
@@ -179,7 +183,7 @@ summary.cuminc2 <- function(object, times = NULL, digits = 5L, ...) {
   assert_class(object, 'cuminc2')
   
   x <- object$cuminc2
-  x <- droplevels(x[x$status %ni% x$cencode, ])
+  x <- droplevels(x[!x$status %in% x$cencode, ])
   
   gr <- levels(as.factor(x$group))
   

@@ -279,7 +279,7 @@ ciplot <- function(x,
         abs(group.name.pos) + usr[2L] else total.at
       total.lab <- 'Total events'
       n.events <- x$cuminc2
-      n.events <- n.events[n.events$status %ni% n.events$cencode, ]
+      n.events <- n.events[!n.events$status %in% n.events$cencode, ]
       n.events <- with(droplevels(n.events), table(group, status))
       if (atrisk)
         n.events <- c(n.events, NA)
