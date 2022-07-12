@@ -15,6 +15,7 @@ ciplot(
   events.total = TRUE,
   wh.events = c("events", "est", "est.sd", "est.ci", "atrisk"),
   events.lab = NULL,
+  events.pad = 0.5,
   events.digits = 3L,
   events.lines = TRUE,
   events.col = FALSE,
@@ -25,6 +26,8 @@ ciplot(
   groups.lab = names(xx),
   xlim = NULL,
   ylim = NULL,
+  cex.lab = par("cex.lab"),
+  cex.main = par("cex.main"),
   cex.axis = par("cex.axis"),
   cex.events = cex.axis,
   gy_test = TRUE,
@@ -55,6 +58,7 @@ ciplot(
   events.total = TRUE,
   wh.events = c("events", "est", "est.sd", "est.ci", "atrisk"),
   events.lab = NULL,
+  events.pad = 0.5,
   events.digits = 3L,
   events.lines = TRUE,
   events.col = FALSE,
@@ -65,6 +69,8 @@ ciplot(
   groups.lab = names(xx),
   xlim = NULL,
   ylim = NULL,
+  cex.lab = par("cex.lab"),
+  cex.main = par("cex.main"),
   cex.axis = par("cex.axis"),
   cex.events = cex.axis,
   gy_test = TRUE,
@@ -108,6 +114,9 @@ censored)}
 
 \item{events.lab}{heading for events table}
 
+\item{events.pad}{extra padding between plot and events table; alternatively,
+a vector of padding for each line in the events table, recycled as needed}
+
 \item{events.digits}{when estimates are shown in events table (see
 \code{wh.events}), number of digits past the decimal to show}
 
@@ -127,6 +136,8 @@ will only sum the at-risk table rows}
 \item{groups.lab}{labels for each line in \code{events} table}
 
 \item{xlim, ylim}{x- and y-axis limits}
+
+\item{cex.lab, cex.main}{text size for axis and main titles}
 
 \item{cex.axis}{text size for axis labels and \code{gy_test}events table}
 
@@ -194,10 +205,10 @@ plot(ci1, split = 'event', events = FALSE, test_details = FALSE,
 plot(ci1$cuminc)
 
 ci1 <- cuminc2(Surv(futime, event(censored) == death) ~ age50, tp)
-plot(ci1, lty.ci = c(1,1,2,2,3,3), col.ci = 1:2)
+plot(ci1, lty.ci = c(1, 1, 2, 2, 3, 3), col.ci = 1:2)
 
 ci2 <- cuminc2(Surv(futime, event(censored) == death) ~ 1, tp)
-plot(ci2, wh.events = 'est', events.digits = 2, groups.order = c(2,1,3))
+plot(ci2, wh.events = 'est', events.digits = 2, groups.order = c(2, 1, 3))
 
 }
 \seealso{

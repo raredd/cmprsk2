@@ -23,6 +23,8 @@
 #'   confidence interval), or \code{"atrisk"} (event at-risk table with
 #'   censored)
 #' @param events.lab heading for events table
+#' @param events.pad extra padding between plot and events table; alternatively,
+#'   a vector of padding for each line in the events table, recycled as needed
 #' @param events.digits when estimates are shown in events table (see
 #'   \code{wh.events}), number of digits past the decimal to show
 #' @param events.lines logical; draw lines next to groups in events table
@@ -35,6 +37,7 @@
 #' @param xlab,ylab x- and y-axis labels
 #' @param groups.lab labels for each line in \code{events} table
 #' @param xlim,ylim x- and y-axis limits
+#' @param cex.lab,cex.main text size for axis and main titles
 #' @param cex.axis text size for axis labels and \code{gy_test}events table
 #' @param cex.events text size for events table
 #' @param gy_test logical; if \code{TRUE} the tests of group equality will
@@ -86,10 +89,10 @@
 #' plot(ci1$cuminc)
 #' 
 #' ci1 <- cuminc2(Surv(futime, event(censored) == death) ~ age50, tp)
-#' plot(ci1, lty.ci = c(1,1,2,2,3,3), col.ci = 1:2)
+#' plot(ci1, lty.ci = c(1, 1, 2, 2, 3, 3), col.ci = 1:2)
 #' 
 #' ci2 <- cuminc2(Surv(futime, event(censored) == death) ~ 1, tp)
-#' plot(ci2, wh.events = 'est', events.digits = 2, groups.order = c(2,1,3))
+#' plot(ci2, wh.events = 'est', events.digits = 2, groups.order = c(2, 1, 3))
 #' 
 #' @export
 
@@ -99,7 +102,7 @@ ciplot <- function(x,
                    
                    events = TRUE, atrisk = TRUE, events.total = TRUE,
                    wh.events = c('events', 'est', 'est.sd', 'est.ci', 'atrisk'),
-                   events.lab = NULL,
+                   events.lab = NULL, events.pad = 0.5,
                    events.digits = 3L,
                    events.lines = TRUE, events.col = FALSE,
                    include_censored = FALSE,
@@ -109,6 +112,7 @@ ciplot <- function(x,
                    groups.lab = names(xx),
                    
                    xlim = NULL, ylim = NULL,
+                   cex.lab = par('cex.lab'), cex.main = par('cex.main'),
                    cex.axis = par('cex.axis'), cex.events = cex.axis,
                    gy_test = TRUE, test_details = TRUE, legend.args = list(),
                    split = FALSE,
@@ -192,13 +196,15 @@ ciplot <- function(x,
   if (!add)
     on.exit(par(op))
   
-  par(mar = c(4 + ng * events + atrisk,
-              4 + pmax(4, extra.margin) - 3 * !events,
-              2,
-              2 + 3 * events * events.total))
-  par(...)
-  if (!is.null(mar))
-    par(mar = mar)
+  ## guess margins based on at-risk table options
+  events.pad <- rep_len(events.pad, ng + atrisk)
+  mar <- mar %||% c(
+    4 + ng * events + max(events.pad) + atrisk,
+    4 + pmax(4, extra.margin) - 3 * !events,
+    2,
+    2 + 3 * events * events.total
+  )
+  par(mar = mar, ...)
   
   time <- unlist(sapply(xx, '[[', 'time'))
   if (is.null(xlim))
@@ -206,16 +212,23 @@ ciplot <- function(x,
   if (is.null(ylim))
     ylim <- c(0, 1)
   
+  ## base plot
+  cex.cex <- 1 / switch(par('mfrow')[1L], 1, 0.83, 0.66)
+  if (!length(cex.cex))
+    cex.cex <- 0.66
+  
   plot(
     xx[[1L]][[1L]], xx[[1L]][[2L]], type = 'n', xlim = xlim, ylim = ylim,
     ann = FALSE, axes = FALSE, panel.first = panel.first,
     panel.last = {
       box(bty = par('bty'))
       axis(1L, xaxis.at, FALSE, lwd = 0, lwd.ticks = 1)
-      axis(1L, xaxis.at, xaxis.lab, FALSE, -0.5, cex.axis = cex.axis)
-      axis(2L, yaxis.at, yaxis.lab, las = 1L, cex.axis = cex.axis)
-      title(xlab = xlab, line = 1.5, adj = 0.5)
-      title(ylab = ylab, main = main)
+      axis(1L, xaxis.at, xaxis.lab, FALSE, -0.5, cex.axis = cex.axis * cex.cex)
+      axis(2L, yaxis.at, yaxis.lab, las = 1L, cex.axis = cex.axis * cex.cex)
+      
+      # title(xlab = xlab, line = 1.5, adj = 0.5, cex.lab = cex.lab * cex.cex)
+      title(xlab = xlab, ylab = ylab, main = main, ...,
+            cex.lab = cex.lab * cex.cex, cex.main = cex.main * cex.cex)
     })
   
   ## ci lines
@@ -240,6 +253,11 @@ ciplot <- function(x,
       lwd.ci <- c(lwd.ci, 0)
     }
     
+    ## labels for each row in events table
+    group.name.pos <- diff(usr[1:2]) / -8
+    padding  <- abs(group.name.pos / 8)
+    line.pos <- seq.int(ng)[order(groups.order)] + 3L + events.pad
+    
     events.at <- events.at[events.at < usr[2L]]
     
     ## set colors for lines of text
@@ -261,14 +279,9 @@ ciplot <- function(x,
         )
       else events.lab
       
-      mtext(events.lab, side = 1L, at = usr[1L], line = 1.5,
+      mtext(events.lab, side = 1L, at = usr[1L], line =  min(line.pos) - 1.5,
             adj = 1, col = 1L, las = 1L, cex = cex.events)
     }
-    
-    ## labels for each row in at-risk table
-    group.name.pos <- diff(usr[1:2]) / -8
-    padding  <- abs(group.name.pos / 8)
-    line.pos <- seq.int(ng)[order(groups.order)] + 2L
     
     mtext(groups.lab, side = 1L, line = line.pos, adj = 1, las = 1L,
           col = col.events, at = group.name.pos, cex = cex.events)
@@ -295,7 +308,7 @@ ciplot <- function(x,
       for (ii in seq.int(ng))
         ## mess with axpad here to adjust the length of the events.line
         axis(1L, c(group.name.pos + padding, 0 - axpad * padding), xpd = NA,
-             labels = FALSE, line = line.pos[ii] + 0.6, lwd.ticks = 0,
+             labels = FALSE, line = line.pos[ii] + 0.5, lwd.ticks = 0,
              col = col.ci[ii], lty = lty.ci[ii], lwd = lwd.ci[ii])
     
     ## number of events
