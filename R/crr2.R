@@ -171,8 +171,17 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
   }
   
   ## add model.frame for use in other methods
-  mf <- model.frame(reformulate(form$cov1), data)
-  mm <- model.matrix(reformulate(form$cov1), data)[, -1L, drop = FALSE]
+  # mf <- model.frame(reformulate(form$cov1), data)
+  # mm <- model.matrix(reformulate(form$cov1), data)[, -1L, drop = FALSE]
+  
+  ## roll back to original
+  formula <- sprintf(
+    'Surv(%s, %s == %s) ~ %s', lhs[1L], lhs[2L],
+    shQuote(failcode), paste(deparse(formula[[3L]]), collapse = '')
+  )
+  formula <- as.formula(formula)
+  mf <- model.frame(formula, data)[, -1L, drop = FALSE]
+  mm <- model.matrix(formula, data)[, -1L, drop = FALSE]
   
   if (is.null(form$cov2) & is.null(cov2)) {
     cm <- NULL
@@ -199,7 +208,7 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
           cov2 = cov2, cencode = cencode, failcode = x, variance = variance,
           cengroup = cengroup, gtol = gtol, maxiter = maxiter, init = init),
       list(data = name, ftime = ftime, fstatus = fstatus, cencode = cencode,
-           formula = reformulate(form$cov1),
+           formula = call('~', formula[[3L]]),
            # cov2 = if (is.null(cm))
            #   NULL else model.matrix(tform, data)[, -1L, drop = FALSE],
            x = x, variance = variance, cengroup = cengroup,
