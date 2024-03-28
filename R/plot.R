@@ -20,8 +20,9 @@
 #'   to show; one of \code{"events"} (cumulative number of events), \code{"est"}
 #'   (estimates, see \code{\link[cmprsk]{timepoints}}), \code{"est.sd"}
 #'   (estimate +/- standard deviation), \code{"est.ci"} (estimate with
-#'   confidence interval), or \code{"atrisk"} (event at-risk table with
-#'   censored)
+#'   confidence interval), \code{"atrisk"} (event at-risk table with
+#'   censored), \code{"percent"} (percent), or \code{"percent.ci"} (pecent with
+#'   confidence interval)
 #' @param events.lab heading for events table
 #' @param events.pad extra padding between plot and events table; alternatively,
 #'   a vector of padding for each line in the events table, recycled as needed
@@ -101,9 +102,10 @@ ciplot <- function(x,
                    lty.ci = par('lty'), lwd.ci = par('lwd'),
                    
                    events = TRUE, atrisk = TRUE, events.total = TRUE,
-                   wh.events = c('events', 'est', 'est.sd', 'est.ci', 'atrisk'),
+                   wh.events = c('events', 'est', 'est.sd', 'est.ci', 'atrisk',
+                                 'percent', 'percent.ci'),
                    events.lab = NULL, events.pad = 0.5,
-                   events.digits = 3L,
+                   events.digits = ifelse(grepl('percent', wh.events), 0L, 3L),
                    events.lines = TRUE, events.col = FALSE,
                    include_censored = FALSE,
                    
@@ -275,7 +277,9 @@ ciplot <- function(x,
           est    = 'Estimate',
           est.sd = 'Estimate +/- Std. dev',
           est.ci = 'Estimate [LCI, UCI]',
-          atrisk = 'Number at risk'
+          atrisk = 'Number at risk',
+          percent = 'Percent',
+          percent.ci = 'Percent [LCI, UCI]'
         )
       else events.lab
       
@@ -321,7 +325,11 @@ ciplot <- function(x,
                            ci = FALSE, digits = events.digits),
       est.ci = timepoints2(x, times = events.at, sd = FALSE, html = FALSE,
                            ci = TRUE, digits = events.digits),
-      atrisk = summary(x, times = events.at)$atrisk
+      atrisk = summary(x, times = events.at)$atrisk,
+      percent = timepoints2(x, times = events.at, sd = FALSE, html = FALSE,
+                            percent = TRUE, ci = FALSE, digits = events.digits),
+      percent.ci = timepoints2(x, times = events.at, sd = FALSE, html = FALSE,
+                               percent = TRUE, ci = TRUE, digits = events.digits)
     )
     
     d1 <- data.frame(time = rep(as.numeric(colnames(ss)), each = nrow(ss)),
@@ -353,7 +361,7 @@ ciplot <- function(x,
         next
       w.adj <- strwidth('0', cex = cex.events, font = par('font')) /
         2 * nd[seq.int(nrow(tmp))]
-      mtext(format(tmp$n.risk, big.mark = ','), 1L, at = tmp$time + w.adj,
+      mtext(trimws(format(tmp$n.risk, big.mark = ',')), 1L, at = tmp$time + w.adj,
             cex = cex.events, font = if (atrisk & ii == ng) 1L else 1L,
             las = 1L, line = line.pos[ii], adj = 1, col = col.events[ii])
     }

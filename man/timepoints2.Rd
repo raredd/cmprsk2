@@ -7,9 +7,11 @@
 timepoints2(
   w,
   times = NULL,
-  digits = 3L,
+  digits = ifelse(percent, 0L, 3L),
   sd = FALSE,
   ci = FALSE,
+  alpha = 0.05,
+  percent = FALSE,
   html = FALSE,
   htmlArgs = list(),
   ...
@@ -23,7 +25,11 @@ timepoints2(
 \item{sd}{logical; if \code{FALSE}, the standard deviation will not be
 shown with the estimate}
 
-\item{ci}{logical; not implemented}
+\item{ci, alpha}{logical; calculate a confidence interval using a two-sided
+\code{alpha}}
+
+\item{percent}{logical; if \code{TRUE}, percentages are shown instead of
+probabilities}
 
 \item{html}{logical; if \code{TRUE}, an html-friendly format is returned;
 the print method for \code{timepoints2} will use \code{\link{htmlTable}}

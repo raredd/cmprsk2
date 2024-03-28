@@ -70,6 +70,10 @@ cuminc2 <- function(formula, data, rho = 0, cencode = NULL,
       call. = FALSE
     )
   
+  stopifnot(
+    nrow(data) > 0
+  )
+  
   name <- substitute(data)
   Name <- if (length(name) > 1L)
     as.list(name)[[2L]] else name
@@ -540,7 +544,10 @@ name_or_index <- function(x, y = NULL) {
 #' @param digits number of digits past the decimal point to keep
 #' @param sd logical; if \code{FALSE}, the standard deviation will not be
 #'   shown with the estimate
-#' @param ci logical; not implemented
+#' @param ci,alpha logical; calculate a confidence interval using a two-sided
+#'   \code{alpha}
+#' @param percent logical; if \code{TRUE}, percentages are shown instead of
+#'   probabilities
 #' @param html logical; if \code{TRUE}, an html-friendly format is returned;
 #'   the print method for \code{timepoints2} will use \code{\link{htmlTable}}
 #'   if \code{html = TRUE}
@@ -575,8 +582,9 @@ name_or_index <- function(x, y = NULL) {
 #' 
 #' @export
 
-timepoints2 <- function(w, times = NULL, digits = 3L, sd = FALSE, ci = FALSE,
-                        html = FALSE, htmlArgs = list(), ...) {
+timepoints2 <- function(w, times = NULL, digits = ifelse(percent, 0L, 3L),
+                        sd = FALSE, ci = FALSE, alpha = 0.05,
+                        percent = FALSE, html = FALSE, htmlArgs = list(), ...) {
   w <- if (inherits(w, 'cuminc2'))
     w[['cuminc']]
   else if (inherits(w, 'cuminc'))
@@ -589,6 +597,7 @@ timepoints2 <- function(w, times = NULL, digits = 3L, sd = FALSE, ci = FALSE,
   } else sort(unique(times))
   
   tp  <- timepoints(w, times)
+  mm <- if (percent) 100 else 1
   res <- tp$est
   
   fmt <- if (!ci)
@@ -596,15 +605,15 @@ timepoints2 <- function(w, times = NULL, digits = 3L, sd = FALSE, ci = FALSE,
   else sprintf('%%.%sf [%%.%sf - %%.%sf]', digits, digits, digits)
   
   if (ci) {
-    z <- qnorm(1 - 0.05 / 2)
+    z <- qnorm(1 - alpha / 2)
     res[] <- mapply(function(x, y, z)
       sprintf(fmt, x, y, z),
-      tp$est,
-      pmax(tp$est - z * sqrt(tp$var), 0),
-      tp$est + z * sqrt(tp$var))
+      tp$est * mm,
+      pmax(tp$est - z * sqrt(tp$var), 0) * mm,
+      (tp$est + z * sqrt(tp$var)) * mm)
   } else {
     res[] <- mapply(function(x, y)
-      sprintf(fmt, x, y), tp$est, sqrt(tp$var))
+      sprintf(fmt, x, y), tp$est * mm, sqrt(tp$var) * mm)
     if (!sd)
       res <- gsub(' [+&].*$', '', res)
   }

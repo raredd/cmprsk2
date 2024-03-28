@@ -13,10 +13,10 @@ ciplot(
   events = TRUE,
   atrisk = TRUE,
   events.total = TRUE,
-  wh.events = c("events", "est", "est.sd", "est.ci", "atrisk"),
+  wh.events = c("events", "est", "est.sd", "est.ci", "atrisk", "percent", "percent.ci"),
   events.lab = NULL,
   events.pad = 0.5,
-  events.digits = 3L,
+  events.digits = ifelse(grepl("percent", wh.events), 0L, 3L),
   events.lines = TRUE,
   events.col = FALSE,
   include_censored = FALSE,
@@ -56,10 +56,10 @@ ciplot(
   events = TRUE,
   atrisk = TRUE,
   events.total = TRUE,
-  wh.events = c("events", "est", "est.sd", "est.ci", "atrisk"),
+  wh.events = c("events", "est", "est.sd", "est.ci", "atrisk", "percent", "percent.ci"),
   events.lab = NULL,
   events.pad = 0.5,
-  events.digits = 3L,
+  events.digits = ifelse(grepl("percent", wh.events), 0L, 3L),
   events.lines = TRUE,
   events.col = FALSE,
   include_censored = FALSE,
@@ -109,8 +109,9 @@ control, use a specific x-coordinate}
 to show; one of \code{"events"} (cumulative number of events), \code{"est"}
 (estimates, see \code{\link[cmprsk]{timepoints}}), \code{"est.sd"}
 (estimate +/- standard deviation), \code{"est.ci"} (estimate with
-confidence interval), or \code{"atrisk"} (event at-risk table with
-censored)}
+confidence interval), \code{"atrisk"} (event at-risk table with
+censored), \code{"percent"} (percent), or \code{"percent.ci"} (pecent with
+confidence interval)}
 
 \item{events.lab}{heading for events table}
 
