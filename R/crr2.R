@@ -141,6 +141,9 @@ crr2 <- function(formula, data, which = NULL, cox = FALSE, variance = TRUE,
       call. = FALSE
     )
   }
+  stopifnot(
+    nrow(data) > 0
+  )
   
   name <- substitute(data)
   Name <- if (length(name) > 1L)
