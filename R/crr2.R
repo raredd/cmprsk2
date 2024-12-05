@@ -97,11 +97,11 @@
 #' 
 #' 
 #' ## covariates that are functions of time are identified by tf()
-#' crr2(Surv(futime, event(censored) == death) ~ factor(sex) + age + tf(age),
+#' crr2(Surv(futime, event(censored) == death) ~ factor(sex) + tf(age),
 #'      data = transplant, tf = function(uft) cbind(uft, uft ^ 2))
 #' 
 #' ## same as above but using the cov2 option
-#' crr2(Surv(futime, event(censored) == death) ~ factor(sex) + age,
+#' crr2(Surv(futime, event(censored) == death) ~ factor(sex) + tf(age),
 #'      cov2 = na.omit(cbind(transplant$age, transplant$age)),
 #'      data = transplant, tf = function(uft) cbind(uft, uft ^ 2))
 #'

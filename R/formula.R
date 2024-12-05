@@ -55,7 +55,7 @@ is.cuminc2.formula <- function(x) {
 
 #' Parse \code{cmprsk2} formula
 #' 
-#' Parse \code{\link{crr2}} or \code{\link{cuminc2}} formulas into usefule
+#' Parse a \code{\link{crr2}} or \code{\link{cuminc2}} formula into useful
 #' pieces and optionally check data source for errors.
 #' 
 #' @param formula a valid \code{crr2} or \code{cuminc2} formula

@@ -39,6 +39,6 @@ A list with the following elements:
 \item{\code{strata}}{strata variable names}
 }
 \description{
-Parse \code{\link{crr2}} or \code{\link{cuminc2}} formulas into usefule
+Parse a \code{\link{crr2}} or \code{\link{cuminc2}} formula into useful
 pieces and optionally check data source for errors.
 }
