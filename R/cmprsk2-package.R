@@ -6,5 +6,5 @@
 #' @aliases cmprsk2
 #' @docType package
 #' @import cmprsk graphics htmlTable survival stats utils
-#' @importFrom grDevices col2rgb colorRampPalette n2mfrow
+#' @importFrom grDevices col2rgb colorRampPalette n2mfrow adjustcolor
 NULL

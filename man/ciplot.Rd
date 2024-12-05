@@ -10,6 +10,13 @@ ciplot(
   col.ci = seq_along(xx),
   lty.ci = par("lty"),
   lwd.ci = par("lwd"),
+  conf.int = FALSE,
+  alpha.conf = 0.05,
+  col.conf = NULL,
+  lty.conf = 2L,
+  lwd.conf = lwd.ci,
+  conf.band = FALSE,
+  alpha.band = 0.5,
   events = TRUE,
   atrisk = TRUE,
   events.total = TRUE,
@@ -53,6 +60,13 @@ ciplot(
   col.ci = seq_along(xx),
   lty.ci = par("lty"),
   lwd.ci = par("lwd"),
+  conf.int = FALSE,
+  alpha.conf = 0.05,
+  col.conf = NULL,
+  lty.conf = 2L,
+  lwd.conf = lwd.ci,
+  conf.band = FALSE,
+  alpha.band = 0.5,
   events = TRUE,
   atrisk = TRUE,
   events.total = TRUE,
@@ -95,6 +109,19 @@ ciplot(
 \item{x}{an object of class \code{\link{cuminc2}}}
 
 \item{col.ci, lty.ci, lwd.ci}{line color, type, and width for each curve}
+
+\item{conf.int}{logical; if \code{TRUE}, adds a confidence interval for
+each curve}
+
+\item{alpha.conf}{the confidence level for \code{conf.int}}
+
+\item{col.conf, lty.conf, lwd.conf}{line color, type, and width for each
+confidence interval line}
+
+\item{conf.band}{logical; if \code{TRUE}, a band is draw for confidence
+intervals}
+
+\item{alpha.band}{alpha transparency (in \code{[0, 1]}) of the band}
 
 \item{events}{logical; if \code{TRUE}, a cumulative events table is drawn}
 
@@ -194,6 +221,13 @@ tp <- within(transplant, {
   age50 <- factor(+(age > 50))
   age_cat <- cut(age, c(0, 40, 60, Inf), c('<40', '40-60', '60+'))
 })
+
+## basic usage
+ci1 <- cuminc2(Surv(futime, event(censored)) ~ 1, tp)
+plot(ci1)
+plot(ci1, groups.lab = paste('1', names(ci1$cuminc))) ## testing
+plot(ci1, conf.int = TRUE, lty.conf = 3)
+plot(ci1, conf.band = TRUE)
 
 ci1 <- cuminc2(Surv(futime, event(censored)) ~ age_cat, tp)
 plot(ci1)

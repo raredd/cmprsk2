@@ -10,6 +10,14 @@
 #' 
 #' @param x an object of class \code{\link{cuminc2}}
 #' @param col.ci,lty.ci,lwd.ci line color, type, and width for each curve
+#' @param conf.int logical; if \code{TRUE}, adds a confidence interval for
+#'   each curve
+#' @param alpha.conf the confidence level for \code{conf.int}
+#' @param col.conf,lty.conf,lwd.conf line color, type, and width for each
+#'   confidence interval line
+#' @param conf.band logical; if \code{TRUE}, a band is draw for confidence
+#'   intervals
+#' @param alpha.band alpha transparency (in \code{[0, 1]}) of the band
 #' @param events logical; if \code{TRUE}, a cumulative events table is drawn
 #' @param atrisk logical; if \code{TRUE}, the number at risk is added to the
 #'   events table
@@ -79,6 +87,13 @@
 #'   age_cat <- cut(age, c(0, 40, 60, Inf), c('<40', '40-60', '60+'))
 #' })
 #' 
+#' ## basic usage
+#' ci1 <- cuminc2(Surv(futime, event(censored)) ~ 1, tp)
+#' plot(ci1)
+#' plot(ci1, groups.lab = paste('1', names(ci1$cuminc))) ## testing
+#' plot(ci1, conf.int = TRUE, lty.conf = 3)
+#' plot(ci1, conf.band = TRUE)
+#' 
 #' ci1 <- cuminc2(Surv(futime, event(censored)) ~ age_cat, tp)
 #' plot(ci1)
 #' plot(ci1, split = 'event')
@@ -100,6 +115,10 @@
 ciplot <- function(x,
                    col.ci = seq_along(xx),
                    lty.ci = par('lty'), lwd.ci = par('lwd'),
+                   
+                   conf.int = FALSE, alpha.conf = 0.05,
+                   col.conf = NULL, lty.conf = 2L, lwd.conf = lwd.ci,
+                   conf.band = FALSE, alpha.band = 0.5,
                    
                    events = TRUE, atrisk = TRUE, events.total = TRUE,
                    wh.events = c('events', 'est', 'est.sd', 'est.ci', 'atrisk',
@@ -177,6 +196,8 @@ ciplot <- function(x,
       call. = FALSE
     )
   }
+  col.conf <- if (is.null(col.conf))
+    col.ci else rep_len(col.conf, ng)
   
   ## -- what is the point of this
   ## run thru tcol to convert integers and strings? idk but running a string
@@ -186,6 +207,9 @@ ciplot <- function(x,
   
   lwd.ci <- rep_len(lwd.ci, ng)
   lty.ci <- rep_len(lty.ci, ng)
+  
+  lwd.conf <- rep_len(lwd.conf, ng)
+  lty.conf <- rep_len(lty.conf, ng)
   
   wh.events <- match.arg(wh.events)
   
@@ -233,13 +257,26 @@ ciplot <- function(x,
             cex.lab = cex.lab * cex.cex, cex.main = cex.main * cex.cex)
     })
   
-  ## ci lines
+  ## cuminc lines and confidence intervals
   u0 <- u1 <- par('usr')
   u1[2L] <- xlim[2L] * 1.01
   do.call('clip', as.list(u1))
-  for (ii in seq.int(ng))
-    lines(xx[[ii]][[1L]], xx[[ii]][[2L]], ...,
-          lty = lty.ci[ii], col = col.ci[ii], lwd = lwd.ci[ii])
+  for (ii in seq.int(ng)) {
+    time <- xx[[ii]]$time
+    est  <- xx[[ii]]$est
+    lines(time, est, ..., lty = lty.ci[ii], col = col.ci[ii], lwd = lwd.ci[ii])
+    
+    conf <- ci.confint(xx[[ii]], alpha.conf)
+    if (conf.band) {
+      polygon(c(conf$time, rev(conf$time)), c(conf$lci, rev(conf$uci)),
+              col = adjustcolor(col.conf[ii], alpha.band), border = NA)
+    } else if (conf.int) {
+      lines(conf$time, conf$lci, lty = lty.conf[ii],
+            col = col.conf[ii], lwd = lwd.conf[ii])
+      lines(conf$time, conf$uci, lty = lty.conf[ii],
+            col = col.conf[ii], lwd = lwd.conf[ii])
+    }
+  }
   do.call('clip', as.list(u0))
   
   if (events) {
@@ -283,10 +320,13 @@ ciplot <- function(x,
         )
       else events.lab
       
-      mtext(events.lab, side = 1L, at = usr[1L], line =  min(line.pos) - 1.5,
+      mtext(events.lab, side = 1L, at = usr[1L], line = min(line.pos) - 1.5,
             adj = 1, col = 1L, las = 1L, cex = cex.events)
     }
     
+    ## annoyingly cuminc adds "1 " to each for y ~ 1 models
+    if (all(grepl('^1 ', names(xx))))
+      groups.lab <- gsub('^1 ', '', groups.lab)
     mtext(groups.lab, side = 1L, line = line.pos, adj = 1, las = 1L,
           col = col.events, at = group.name.pos, cex = cex.events)
     
@@ -302,8 +342,8 @@ ciplot <- function(x,
         n.events <- c(n.events, NA)
       mtext(c(n.events), side = 1L, at = at, line = line.pos, adj = 1,
             col = col.events, las = 1L, cex = cex.events)
-      mtext(total.lab, side = 1L, at = at, line = 1.5, adj = 1,
-            col = 1L, las = 1L, cex = cex.events)
+      mtext(total.lab, side = 1L, at = at, line = min(line.pos) - 1.5,
+            adj = 1, col = 1L, las = 1L, cex = cex.events)
     }
     
     ## draw matching lines for n events
@@ -332,9 +372,11 @@ ciplot <- function(x,
                                percent = TRUE, ci = TRUE, digits = events.digits)
     )
     
-    d1 <- data.frame(time = rep(as.numeric(colnames(ss)), each = nrow(ss)),
-                     n.risk = c(ss), strata = rep(rownames(ss), ncol(ss)),
-                     stringsAsFactors = FALSE)
+    d1 <- data.frame(
+      time = rep(as.numeric(colnames(ss)), each = nrow(ss)),
+      n.risk = c(ss), strata = rep(rownames(ss), ncol(ss)),
+      stringsAsFactors = FALSE
+    )
     d1$strata <- factor(d1$strata, setdiff(names(x$cuminc), 'Tests'))
     # d1 <- d1[d1$n.risk > 0, ]
     d2 <- split(d1, d1$strata)
@@ -369,8 +411,9 @@ ciplot <- function(x,
   
   ## add gray text in upper right corner
   if (gy_test) {
-    txt <- tryCatch(gy_text(ci, details = test_details),
-                    error = function(e) NULL)
+    txt <- tryCatch(
+      gy_text(ci, details = test_details), error = function(e) NULL
+    )
     if (is.null(txt))
       NULL
     else {
@@ -392,6 +435,16 @@ ciplot <- function(x,
 #' @rdname ciplot
 #' @export
 plot.cuminc2 <- ciplot
+
+ci.confint <- function(x, alpha = 0.05) {
+  cv <- qnorm(1 - alpha / 2)
+  se <- sqrt(x$var)
+  data.frame(
+    time = x$time,
+    lci = x$est - (se * cv),
+    uci = x$est + (se * cv)
+  )
+}
 
 #' ciplot_by
 #' 
