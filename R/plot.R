@@ -1,5 +1,5 @@
 ### plotting functions
-# ciplot, plot.cuminc2, ciplot_by
+# ciplot, plot.cuminc2, lines.cuminc2, ciplot_by
 ###
 
 
@@ -92,7 +92,8 @@
 #' plot(ci1)
 #' plot(ci1, groups.lab = paste('1', names(ci1$cuminc))) ## testing
 #' plot(ci1, conf.int = TRUE, lty.conf = 3)
-#' plot(ci1, conf.band = TRUE)
+#' plot(ci1, conf.band = TRUE, add = TRUE)
+#' lines(ci1, col = c(NA, 'blue', NA), lwd = 3)
 #' 
 #' ci1 <- cuminc2(Surv(futime, event(censored)) ~ age_cat, tp)
 #' plot(ci1)
@@ -435,6 +436,13 @@ ciplot <- function(x,
 #' @rdname ciplot
 #' @export
 plot.cuminc2 <- ciplot
+
+#' @rdname ciplot
+#' @export
+lines.cuminc2 <- function(x, ...) {
+  stopifnot(inherits(x, 'cuminc2'))
+  lines(x$cuminc, ...)
+}
 
 ci.confint <- function(x, alpha = 0.05) {
   cv <- qnorm(1 - alpha / 2)

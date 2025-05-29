@@ -3,6 +3,7 @@
 \name{ciplot}
 \alias{ciplot}
 \alias{plot.cuminc2}
+\alias{lines.cuminc2}
 \title{\code{cuminc2} plotting method}
 \usage{
 ciplot(
@@ -104,6 +105,8 @@ ciplot(
   panel.last = NULL,
   ...
 )
+
+\method{lines}{cuminc2}(x, ...)
 }
 \arguments{
 \item{x}{an object of class \code{\link{cuminc2}}}
@@ -227,7 +230,8 @@ ci1 <- cuminc2(Surv(futime, event(censored)) ~ 1, tp)
 plot(ci1)
 plot(ci1, groups.lab = paste('1', names(ci1$cuminc))) ## testing
 plot(ci1, conf.int = TRUE, lty.conf = 3)
-plot(ci1, conf.band = TRUE)
+plot(ci1, conf.band = TRUE, add = TRUE)
+lines(ci1, col = c(NA, 'blue', NA), lwd = 3)
 
 ci1 <- cuminc2(Surv(futime, event(censored)) ~ age_cat, tp)
 plot(ci1)
